@@ -1,0 +1,58 @@
+# Git Ignore para Workshop-2 ETL
+
+# Entorno y variables secretas
+.env
+*.env
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# Airflow
+logs/
+airflow.cfg
+airflow.db
+webserver_config.py
+*.pid
+
+# Great Expectations datos locales / uncommitted
+gx/uncommitted/
+great_expectations/uncommitted/
+
+# Datos temporales y staging
+data/staging/
+data/raw/
+data/processed/
+*.parquet
+*.tmp
+
+# Sistema Operativo
+.DS_Store
+Thumbs.db

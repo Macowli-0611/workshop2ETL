@@ -1,0 +1,94 @@
+services:
+  # ==============================================================
+  # 1. Base de Datos Relacional (PostgreSQL 16)
+  # Aloja:
+  # - source_music_db: Fuente operacional para Grammys
+  # - dw_music_analytics: Data Warehouse dimensional (Star Schema)
+  # - airflow_db: Base de metadatos de Apache Airflow
+  # ==============================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: workshop2_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_secure_password}
+      POSTGRES_MULTIPLE_DATABASES: "source_music_db,dw_music_analytics,airflow_db"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/init_multiple_databases.sh:/docker-entrypoint-initdb.d/01_init_multiple_databases.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - workshop2_net
+
+  # ==============================================================
+  # 2. Inicialización de Metadatos de Airflow 3.1.8
+  # Ejecuta migraciones de esquema en PostgreSQL antes de iniciar servicios
+  # ==============================================================
+  airflow-init:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: workshop2_airflow_init
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres_secure_password}@postgres:5432/airflow_db
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+    command: airflow db migrate
+    networks:
+      - workshop2_net
+
+  # ==============================================================
+  # 3. Apache Airflow 3.1.8 (Orquestador Principal)
+  # Ejecuta modo standalone (API Server, Scheduler, Triggerer, DAG Processor)
+  # ==============================================================
+  airflow:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: workshop2_airflow
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres_secure_password}@postgres:5432/airflow_db
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "False"
+      AIRFLOW__API__AUTH_BACKENDS: "airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session"
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_secure_password}
+      SOURCE_DB_NAME: source_music_db
+      DW_DB_NAME: dw_music_analytics
+      DATA_DIR: /opt/airflow/data
+      PYTHONPATH: /opt/airflow
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./src:/opt/airflow/src
+      - ./gx:/opt/airflow/gx
+      - ./sql:/opt/airflow/sql
+      - ./data:/opt/airflow/data
+    command: airflow standalone
+    networks:
+      - workshop2_net
+
+networks:
+  workshop2_net:
+    driver: bridge
+
+volumes:
+  postgres_data:

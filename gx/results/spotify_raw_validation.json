@@ -1,0 +1,98 @@
+{
+  "dataset": "spotify_raw",
+  "file_path": "/opt/airflow/data/staging/spotify_raw.parquet",
+  "total_records": 114000,
+  "success": true,
+  "rules_evaluated": [
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "rule_description": "DQ-RAW-SPT-01 [Critical]: El ID de pista debe ser 100% no nulo.",
+      "success": true,
+      "observed_value": {
+        "element_count": 114000,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "rule_description": "DQ-RAW-SPT-02 [Critical]: La duraci\u00f3n f\u00edsica debe ser mayor a 1,000 ms en al menos el 99.9% del lote raw.",
+      "success": true,
+      "observed_value": {
+        "element_count": 114000,
+        "unexpected_count": 1,
+        "unexpected_percent": 0.0008771929824561403,
+        "partial_unexpected_list": [
+          0
+        ],
+        "missing_count": 0,
+        "missing_percent": 0.0,
+        "unexpected_percent_total": 0.0008771929824561403,
+        "unexpected_percent_nonmissing": 0.0008771929824561403,
+        "partial_unexpected_counts": [
+          {
+            "value": 0,
+            "count": 1
+          }
+        ],
+        "partial_unexpected_index_list": [
+          65900
+        ]
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "rule_description": "DQ-RAW-SPT-03 [Critical]: Danceability debe estar en escala normalizada [0.0, 1.0].",
+      "success": true,
+      "observed_value": {
+        "element_count": 114000,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "missing_count": 0,
+        "missing_percent": 0.0,
+        "unexpected_percent_total": 0.0,
+        "unexpected_percent_nonmissing": 0.0,
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "rule_description": "DQ-RAW-SPT-03 [Critical]: Energy debe estar en escala normalizada [0.0, 1.0].",
+      "success": true,
+      "observed_value": {
+        "element_count": 114000,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "missing_count": 0,
+        "missing_percent": 0.0,
+        "unexpected_percent_total": 0.0,
+        "unexpected_percent_nonmissing": 0.0,
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "rule_description": "DQ-RAW-SPT-04 [Critical]: Popularidad debe estar en rango [0, 100].",
+      "success": true,
+      "observed_value": {
+        "element_count": 114000,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "missing_count": 0,
+        "missing_percent": 0.0,
+        "unexpected_percent_total": 0.0,
+        "unexpected_percent_nonmissing": 0.0,
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    }
+  ]
+}

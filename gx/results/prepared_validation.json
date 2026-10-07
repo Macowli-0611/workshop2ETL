@@ -1,0 +1,64 @@
+{
+  "dataset": "prepared_music_data",
+  "file_path": "/opt/airflow/data/staging/prepared_music_data.parquet",
+  "total_records": 113549,
+  "success": true,
+  "rules_evaluated": [
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "rule_description": "DQ-PREP-INT-02 [Critical]: Clave de negocio de track no nula.",
+      "success": true,
+      "observed_value": {
+        "element_count": 113549,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "rule_description": "DQ-PREP-INT-02 [Critical]: Nombre de canci\u00f3n no nulo.",
+      "success": true,
+      "observed_value": {
+        "element_count": 113549,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "rule_description": "DQ-PREP-INT-02 [Critical]: Artista normalizado no nulo.",
+      "success": true,
+      "observed_value": {
+        "element_count": 113549,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_in_set",
+      "rule_description": "DQ-PREP-INT-01 [Informational]: Bandera de premio booleana v\u00e1lida.",
+      "success": true,
+      "observed_value": {
+        "element_count": 113549,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "missing_count": 0,
+        "missing_percent": 0.0,
+        "unexpected_percent_total": 0.0,
+        "unexpected_percent_nonmissing": 0.0,
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    }
+  ]
+}
