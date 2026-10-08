@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workshop-2: Building a Reliable Batch Data Pipeline — Defense Deck</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #070b14;
+      --bg-card: rgba(15, 23, 42, 0.75);
+      --bg-card-hover: rgba(30, 41, 59, 0.85);
+      --border-color: rgba(148, 163, 184, 0.15);
+      --border-highlight: rgba(56, 189, 248, 0.4);
+      --accent-cyan: #38bdf8;
+      --accent-purple: #a855f7;
+      --accent-emerald: #10b981;
+      --accent-rose: #f43f5e;
+      --accent-amber: #f59e0b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Background Ambient Gradients */
+    .ambient-glow {
+      position: fixed;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      filter: blur(140px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.18;
+      transition: all 1s ease;
+    }
+    .glow-1 { top: -100px; left: -100px; background: var(--accent-cyan); }
+    .glow-2 { bottom: -100px; right: -100px; background: var(--accent-purple); }
+
+    /* Top Control Bar */
+    header {
+      position: relative;
+      z-index: 20;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 28px;
+      background: rgba(10, 15, 29, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-color);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      letter-spacing: -0.01em;
+    }
+    .brand-badge {
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+      color: #050811;
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .deck-meta {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .deck-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-ctrl {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+    .btn-ctrl:hover {
+      background: rgba(51, 65, 85, 0.8);
+      border-color: var(--accent-cyan);
+      color: #fff;
+    }
+
+    /* Main Slides Viewport */
+    main#deck-container {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      height: calc(100vh - 105px);
+      z-index: 10;
+      overflow: hidden;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      padding: 32px 56px;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      opacity: 0;
+      transform: translateY(16px) scale(0.99);
+      transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .slide.active {
+      display: flex;
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    /* Typography & Hierarchy */
+    .slide-tag {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .slide-tag::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      background: var(--accent-cyan);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--accent-cyan);
+    }
+    .slide-title {
+      font-size: 2.2rem;
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .slide-subtitle {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      max-width: 900px;
+      margin-bottom: 24px;
+    }
+
+    /* Slide Content Grid Layouts */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      height: 62%;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      height: 62%;
+    }
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      height: 62%;
+    }
+
+    /* Cards & Containers */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+      transition: all 0.25s ease;
+    }
+    .card:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--border-highlight);
+      transform: translateY(-2px);
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      font-size: 0.72rem;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .badge-cyan { background: rgba(56, 189, 248, 0.15); color: var(--accent-cyan); border: 1px solid rgba(56, 189, 248, 0.3); }
+    .badge-purple { background: rgba(168, 85, 247, 0.15); color: var(--accent-purple); border: 1px solid rgba(168, 85, 247, 0.3); }
+    .badge-emerald { background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-rose { background: rgba(244, 63, 94, 0.15); color: var(--accent-rose); border: 1px solid rgba(244, 63, 94, 0.3); }
+    .badge-amber { background: rgba(245, 158, 11, 0.15); color: var(--accent-amber); border: 1px solid rgba(245, 158, 11, 0.3); }
+
+    .card-body {
+      flex: 1;
+      font-size: 0.88rem;
+      color: #cbd5e1;
+      line-height: 1.55;
+    }
+    .card-body ul {
+      padding-left: 18px;
+      margin-top: 8px;
+    }
+    .card-body li {
+      margin-bottom: 6px;
+    }
+
+    /* Metric Callout Boxes */
+    .metric-box {
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .metric-value {
+      font-family: var(--font-mono);
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .metric-label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Code & Terminal Blocks */
+    .code-block {
+      background: #050811;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      line-height: 1.5;
+      color: #e2e8f0;
+      overflow-x: auto;
+    }
+    .code-accent { color: var(--accent-cyan); font-weight: 600; }
+    .code-keyword { color: var(--accent-purple); font-weight: 600; }
+    .code-success { color: var(--accent-emerald); font-weight: 600; }
+    .code-fail { color: var(--accent-rose); font-weight: 600; }
+
+    /* Tables */
+    .table-clean {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      text-align: left;
+    }
+    .table-clean th {
+      padding: 9px 12px;
+      background: rgba(30, 41, 59, 0.6);
+      color: var(--accent-cyan);
+      font-weight: 600;
+      border-bottom: 1px solid var(--border-color);
+      text-transform: uppercase;
+      font-size: 0.72rem;
+      letter-spacing: 0.05em;
+    }
+    .table-clean td {
+      padding: 9px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      color: #cbd5e1;
+    }
+    .table-clean tr:hover td {
+      background: rgba(51, 65, 85, 0.25);
+    }
+
+    /* Image Display for KPIs */
+    .img-kpi-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #020617;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+      padding: 6px;
+    }
+    .img-kpi-container img {
+      width: 100%;
+      height: auto;
+      max-height: 310px;
+      object-fit: contain;
+      border-radius: 6px;
+    }
+
+    /* Bottom Navigation Bar */
+    footer {
+      position: relative;
+      z-index: 20;
+      height: 48px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 28px;
+      background: rgba(10, 15, 29, 0.95);
+      border-top: 1px solid var(--border-color);
+      font-size: 0.82rem;
+    }
+    .progress-bar-container {
+      flex: 1;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
+      margin: 0 32px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+      width: 8%;
+      transition: width 0.3s ease;
+    }
+    .key-hint {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(30, 41, 59, 0.6);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+    }
+
+    /* Speaker Defense Drawer (Toggled with 'N') */
+    #defense-notes-drawer {
+      position: fixed;
+      bottom: 48px;
+      left: 0;
+      right: 0;
+      background: rgba(8, 12, 22, 0.95);
+      backdrop-filter: blur(16px);
+      border-top: 2px solid var(--accent-cyan);
+      padding: 16px 36px;
+      z-index: 30;
+      transform: translateY(105%);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
+    }
+    #defense-notes-drawer.open {
+      transform: translateY(0);
+    }
+    .notes-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .notes-content {
+      font-size: 0.88rem;
+      color: #e2e8f0;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+
+  <!-- Header -->
+  <header>
+    <div class="brand">
+      <span class="brand-badge">ETL (G01)</span>
+      <span>UAO — Workshop-2 Defense</span>
+    </div>
+    <div class="deck-meta">
+      <span id="current-slide-num">Slide 1 of 13</span>
+      <div class="deck-controls">
+        <button class="btn-ctrl" onclick="toggleNotes()" title="Toggle Defense Notes (Key: N)">
+          <span>💬</span> Defense Script <span class="key-hint">N</span>
+        </button>
+        <button class="btn-ctrl" onclick="toggleFullscreen()" title="Toggle Fullscreen (Key: F)">
+          <span>⛶</span> Fullscreen <span class="key-hint">F</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Slides Viewport -->
+  <main id="deck-container">
+
+    <!-- SLIDE 1: Title & Engineering Premise -->
+    <section class="slide active" data-notes="Welcome professors and evaluators. Today I present our reliable batch data pipeline for Workshop 2. Our core engineering principle is: A data engineer does not build scripts; a data engineer designs systems. We integrated Spotify and Grammy Awards data into a verified star schema Data Warehouse using Airflow 3.1.8 and Great Expectations.">
+      <div class="slide-tag">Engineering Solution Defense • 20% Oral Defense</div>
+      <h1 class="slide-title" style="font-size: 3rem; margin-bottom: 14px;">Building a Reliable Batch Data Pipeline</h1>
+      <p class="slide-subtitle" style="font-size: 1.25rem;">Heterogeneous Music Data Integration: Spotify Streaming Telemetry & Historical Grammy Awards Acclaim</p>
+      
+      <div class="grid-3" style="height: 48%; margin-top: 10px;">
+        <div class="card" style="border-left: 3px solid var(--accent-cyan);">
+          <div class="card-title" style="color: var(--accent-cyan);">🏛️ Engineering Principle</div>
+          <div class="card-body" style="font-size: 0.95rem; line-height: 1.6; margin-top: 10px;">
+            <em>"A Data Engineer does not build scripts. A Data Engineer designs systems."</em><br><br>
+            Every component in this solution is built for reproducibility, auditability, and failure observability.
+          </div>
+        </div>
+        <div class="card" style="border-left: 3px solid var(--accent-purple);">
+          <div class="card-title" style="color: var(--accent-purple);">🛡️ Quality Axiom</div>
+          <div class="card-body" style="font-size: 0.95rem; line-height: 1.6; margin-top: 10px;">
+            <em>"Reliable pipelines do not assume data is correct. They verify it."</em><br><br>
+            Validation detects violations; transformation applies known engineering rules. Modifying data to force a test pass is prohibited.
+          </div>
+        </div>
+        <div class="card" style="border-left: 3px solid var(--accent-emerald);">
+          <div class="card-title" style="color: var(--accent-emerald);">🔁 Reliability Defined</div>
+          <div class="card-body" style="font-size: 0.95rem; line-height: 1.6; margin-top: 10px;">
+            <em>"Reliable does not mean nothing fails. It means failures are anticipated, controlled, and observable."</em><br><br>
+            Featuring selective retries, gated downstream halts, and 100% idempotent reruns.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 2: Business & Analytical Scope (The 3 Requirements) -->
+    <section class="slide" data-notes="In Section 6.1, we established 3 analytical requirements requiring both datasets. Spotify gives audio signal telemetry and streaming popularity; Grammys provides critical acclaim since 1958. Together, they answer questions neither can answer alone: acoustic profiles, popularity uplift, and historical lyrical trends.">
+      <div class="slide-tag">Section 6.1 • Scope & Requirements</div>
+      <h2 class="slide-title">The Three Analytical Requirements</h2>
+      <p class="slide-subtitle">Unifying consumer streaming behavior with institutional industry accolades through traceability.</p>
+
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">RQ-01: Acoustic Profile</span>
+            <span class="badge badge-cyan">Perceptual Signals</span>
+          </div>
+          <div class="card-body">
+            <strong>Question:</strong> Do audio features (Danceability, Energy, Valence, Acousticness) differentiate Grammy winners from standard catalog tracks?
+            <ul>
+              <li><strong>Sources:</strong> Spotify audio metrics + Grammy category & winner status.</li>
+              <li><strong>Expected KPI:</strong> Comparative Audio Fingerprint & Feature Ratio.</li>
+              <li><strong>Grain:</strong> Track, award edition year, and award category.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">RQ-02: Genre Uplift</span>
+            <span class="badge badge-purple">Popularity Telemetry</span>
+          </div>
+          <div class="card-body">
+            <strong>Question:</strong> What is the popularity multiplier of Grammy acclaim across musical genres?
+            <ul>
+              <li><strong>Sources:</strong> Spotify <code>popularity</code> & <code>track_genre</code> + Grammy winner data.</li>
+              <li><strong>Expected KPI:</strong> Genre Popularity Uplift Delta (Winners vs. Catalog).</li>
+              <li><strong>Grain:</strong> Catalog genre and award acclaim tier.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">RQ-03: Historical Shifts</span>
+            <span class="badge badge-emerald">Temporal & Credits</span>
+          </div>
+          <div class="card-body">
+            <strong>Question:</strong> How has explicit lyrical content and multi-artist collaboration evolved in awarded music across decades?
+            <ul>
+              <li><strong>Sources:</strong> Spotify <code>explicit</code> & artist parsing + Grammy historical edition year.</li>
+              <li><strong>Expected KPI:</strong> Explicit Content Share % & Collaboration Ratio.</li>
+              <li><strong>Grain:</strong> Award edition decade and year.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 3: Data Profiling & Evidence-Based Risks -->
+    <section class="slide" data-notes="Section 6.3 requires evidence-based profiling before writing transformation code. We analyzed 114k Spotify tracks and 4,810 Grammy records. We discovered 450 duplicate pairs, one completely corrupted track with duration 0, and 1,840 null artists in Grammys due to classical composition credits. This evidence dictated our exact cleaning and validation thresholds.">
+      <div class="slide-tag">Section 6.3 • Evidence-Based Profiling</div>
+      <h2 class="slide-title">Source Data Profiling Findings</h2>
+      <p class="slide-subtitle">Empirical discovery from <code>notebooks/data_profiling.ipynb</code> driving our engineering decisions.</p>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">🎧 Spotify Dataset Profiling</span>
+            <span class="badge badge-cyan">114,000 Rows</span>
+          </div>
+          <div class="card-body">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+              <div class="metric-box">
+                <span class="metric-value">89,741</span>
+                <span class="metric-label">Unique Track IDs</span>
+              </div>
+              <div class="metric-box">
+                <span class="metric-value">450</span>
+                <span class="metric-label">Duplicate Tuples</span>
+              </div>
+            </div>
+            <ul>
+              <li><strong>Grain Ambiguity:</strong> 24,259 repeated IDs due to multi-genre indexing; 450 exact duplicate rows on <code>(track_id, track_genre)</code>.</li>
+              <li><strong>Physical Outliers:</strong> Row 65,900 contained <code>duration_ms = 0</code> and <code>track_name = NaN</code>.</li>
+              <li><strong>Audio Feature Range:</strong> Strict adherence to $[0.0, 1.0]$ across normal rows.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">🏆 Grammy Awards Profiling</span>
+            <span class="badge badge-purple">4,810 Rows (Relational DB)</span>
+          </div>
+          <div class="card-body">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+              <div class="metric-box">
+                <span class="metric-value">0</span>
+                <span class="metric-label">Natural Key Duplicates</span>
+              </div>
+              <div class="metric-box">
+                <span class="metric-value">100%</span>
+                <span class="metric-label">Historical Winners</span>
+              </div>
+            </div>
+            <ul>
+              <li><strong>Unique Natural Grain:</strong> <code>(year, category, nominee)</code> has 0 duplicate rows.</li>
+              <li><strong>Missing Artist Handling:</strong> 1,840 rows lack artist names because classical & producer categories credit the work in <code>nominee</code>.</li>
+              <li><strong>Temporal Span:</strong> Valid historical range from 1958 to 2019 across 638 distinct categories.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 4: End-to-End System Architecture -->
+    <section class="slide" data-notes="Here is our end-to-end architecture conforming to Section 5. Notice the two independent source branches. Spotify reads CSV; Grammys extracts from PostgreSQL through SQL as required by Section 4.3. Both branches undergo independent Great Expectations Raw Validation. If and only if both pass, they converge into Transformation, followed by Prepared Validation, and an idempotent load to PostgreSQL DW.">
+      <div class="slide-tag">Section 5 & 6.7 • Solution Architecture</div>
+      <h2 class="slide-title">Reliable Pipeline Architecture</h2>
+      <p class="slide-subtitle">Two independent observable source branches converging through gated quality checkpoints.</p>
+
+      <div class="card" style="height: 68%; justify-content: center; background: #030712;">
+        <div class="code-block" style="font-size: 0.85rem; line-height: 1.6;">
+<span class="code-accent">[ SPOTIFY CSV FILE ]</span>                                <span class="code-accent">[ GRAMMY RELATIONAL POSTGRESQL DB ]</span> (Section 4.3)
+         │                                                            │
+         ▼                                                            ▼
+<span class="code-keyword">extract_spotify</span> (Staging Parquet)                            <span class="code-keyword">extract_grammys</span> (Staging Parquet)
+         │                                                            │
+         ▼                                                            ▼
+<span class="code-success">validate_spotify_raw</span> (GX Suite)                              <span class="code-success">validate_grammys_raw</span> (GX Suite)
+  [DQ-RAW-SPT-01 .. 04]                                        [DQ-RAW-GRM-01 .. 02]
+         │                                                            │
+         └──────────────────────────┬─────────────────────────────────┘
+                                    │ (Both raw branches must PASS)
+                                    ▼
+                     <span class="code-keyword">transform_and_integrate</span> (Clean, Harmonize, Match)
+                                    │
+                                    ▼
+                     <span class="code-success">validate_prepared</span> (GX Suite: DQ-PREP-INT-01..02)
+                                    │ (Pre-load Gate)
+                                    ▼
+                     <span class="code-keyword">load_dw</span> (PostgreSQL Idempotent Upsert: ON CONFLICT DO UPDATE)
+                                    │
+                                    ▼
+                     <span class="code-accent">[ ANALYTICAL DATA WAREHOUSE: Star Schema in dw_music_analytics ]</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 5: Automated Validation with Great Expectations -->
+    <section class="slide" data-notes="Section 6.5 requires at least 6 rules mapped to explicit severities. We designed 8 rules in Great Expectations. Critical severities halt the pipeline immediately. Warning severities log actionable evidence without blocking. For example, duration must be strictly positive, year must fall between 1958 and 2026, and audio metrics must stay bounded.">
+      <div class="slide-tag">Section 6.5 & 6.6 • Quality Engineering</div>
+      <h2 class="slide-title">Great Expectations Validation Gates</h2>
+      <p class="slide-subtitle">Eight formal quality rules structured across Raw and Prepared gates with operational severity policies.</p>
+
+      <div class="card" style="height: 68%;">
+        <table class="table-clean">
+          <thead>
+            <tr>
+              <th>Rule ID</th>
+              <th>Gate / Layer</th>
+              <th>Target Attribute</th>
+              <th>Quality Dimension</th>
+              <th>Severity</th>
+              <th>Threshold & GX Expectation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong class="code-accent">DQ-RAW-SPT-01</strong></td>
+              <td>Spotify Raw</td>
+              <td><code>track_id</code></td>
+              <td>Uniqueness / Completeness</td>
+              <td><span class="badge badge-rose">Critical</span></td>
+              <td>100% non-null (<code>expect_column_values_to_not_be_null</code>)</td>
+            </tr>
+            <tr>
+              <td><strong class="code-accent">DQ-RAW-SPT-02</strong></td>
+              <td>Spotify Raw</td>
+              <td><code>duration_ms</code></td>
+              <td>Physical Validity</td>
+              <td><span class="badge badge-rose">Critical</span></td>
+              <td>$\ge 99.9\%$ exceeding 1,000 ms (<code>expect_column_values_to_be_between</code>)</td>
+            </tr>
+            <tr>
+              <td><strong class="code-accent">DQ-RAW-SPT-03</strong></td>
+              <td>Spotify Raw</td>
+              <td><code>danceability, energy</code></td>
+              <td>Range Boundary</td>
+              <td><span class="badge badge-rose">Critical</span></td>
+              <td>100% within $[0.0, 1.0]$ bounds</td>
+            </tr>
+            <tr>
+              <td><strong class="code-accent">DQ-RAW-GRM-01</strong></td>
+              <td>Grammys Raw</td>
+              <td><code>year</code></td>
+              <td>Temporal Integrity</td>
+              <td><span class="badge badge-rose">Critical</span></td>
+              <td>100% within historical Academy range $[1958, 2026]$</td>
+            </tr>
+            <tr>
+              <td><strong class="code-accent">DQ-RAW-GRM-02</strong></td>
+              <td>Grammys Raw</td>
+              <td><code>nominee</code></td>
+              <td>Completeness</td>
+              <td><span class="badge badge-amber">Warning</span></td>
+              <td>$\ge 99.5\%$ non-null (tolerates classical craft category nulls)</td>
+            </tr>
+            <tr>
+              <td><strong class="code-accent">DQ-PREP-INT-02</strong></td>
+              <td>Prepared Gate</td>
+              <td><code>track_id, track_name</code></td>
+              <td>Referential Integrity</td>
+              <td><span class="badge badge-rose">Critical</span></td>
+              <td>100% non-null before loading into PostgreSQL Data Warehouse</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SLIDE 6: Transformation & The Integration Contract -->
+    <section class="slide" data-notes="Section 6.8 emphasizes that integration is not just 'performing a merge', it is a data contract. We established a normalized key pair: clean track name and clean primary artist. We handled semicolons in Spotify and collaborative tokens in Grammys. Unmatched catalog tracks are preserved with false flags and mapped to surrogate key 0.">
+      <div class="slide-tag">Section 6.8 • Integration Contract</div>
+      <h2 class="slide-title">Transformation & The Integration Contract</h2>
+      <p class="slide-subtitle">A formal contract specifying matching keys, cardinality, text normalization, and unmatched record policies.</p>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">🧼 Evidence-Based Cleaning</span>
+            <span class="badge badge-cyan">Preprocessing</span>
+          </div>
+          <div class="card-body">
+            <ul>
+              <li><strong>Duplicate Pruning:</strong> Removed 450 pure duplicate rows on <code>(track_id, track_genre)</code> identified during profiling.</li>
+              <li><strong>Corrupted Outlier Filter:</strong> Filtered row 65,900 with duration = 0 ms and NaN track metadata.</li>
+              <li><strong>Textual Normalization:</strong> Stripped punctuation, converted to lowercase, and trimmed redundant whitespace.</li>
+              <li><strong>Artist Decomposition:</strong> Extracted primary artist by splitting on <code>;</code> for Spotify and collaborative tokens (<code>featuring</code>, <code>&</code>, <code>with</code>) for Grammys.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">🤝 The Integration Contract</span>
+            <span class="badge badge-purple">Data Contract</span>
+          </div>
+          <div class="card-body">
+            <ul>
+              <li><strong>Matching Keys:</strong> <code>(clean_track_name, clean_primary_artist)</code>.</li>
+              <li><strong>Cardinality:</strong> N-to-1 (multiple genre tracks map to single award honor).</li>
+              <li><strong>Unmatched Catalog Rows:</strong> Preserved via Left Join with <code>is_grammy_winner = False</code>, <code>award_count = 0</code>, mapped to default dimension keys (SK = 0).</li>
+              <li><strong>Result:</strong> 113,549 prepared load-ready tracks with 475 confirmed Grammy-winning tracks (0.42% of catalog).</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 7: Dimensional Model (Star Schema) -->
+    <section class="slide" data-notes="In Section 6.4 and 6.10, we implemented our star schema in PostgreSQL dw_music_analytics. SQLite was completely rejected as required. The grain is one row per track, catalog genre, and award edition. We enforce a composite unique constraint on foreign keys, which underpins our 100% idempotent Safe Rerun strategy.">
+      <div class="slide-tag">Section 6.4 & 6.10 • Dimensional Modeling</div>
+      <h2 class="slide-title">Star Schema Data Warehouse in PostgreSQL</h2>
+      <p class="slide-subtitle">Requirements-driven dimensional model hosted in <code>dw_music_analytics</code> (SQLite strictly rejected).</p>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">⭐ Fact & Dimensions Grain</span>
+            <span class="badge badge-emerald">PostgreSQL 16</span>
+          </div>
+          <div class="card-body">
+            <ul>
+              <li><strong>Fact Table:</strong> <code>fact_music_performance</code></li>
+              <li><strong>Grain:</strong> One row per audio track, catalog genre, and award event.</li>
+              <li><strong>Surrogate Keys:</strong> <code>SERIAL</code> autoincrementing integers across all 5 dimensions.</li>
+              <li><strong>Default Dimension Records:</strong> SK = 0 created for <code>dim_time</code> ('Unknown') and <code>dim_grammy_category</code> ('No Nomination / Not Applicable') for non-awarded catalog tracks.</li>
+              <li><strong>Safe Rerun Invariant:</strong> <code>CONSTRAINT uq_fact_grain UNIQUE (track_sk, genre_sk, time_sk, category_sk)</code>.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">📊 Schema Entities & Measures</span>
+            <span class="badge badge-cyan">DDL Architecture</span>
+          </div>
+          <div class="card-body">
+            <table class="table-clean" style="font-size: 0.78rem;">
+              <tr><th>Entity</th><th>Type</th><th>Key Attributes</th></tr>
+              <tr><td><code>dim_artist</code></td><td>Dimension</td><td><code>artist_sk (PK), artist_name, artist_type</code></td></tr>
+              <tr><td><code>dim_track</code></td><td>Dimension</td><td><code>track_sk (PK), track_id_spotify, track_name</code></td></tr>
+              <tr><td><code>dim_genre</code></td><td>Dimension</td><td><code>genre_sk (PK), genre_name</code></td></tr>
+              <tr><td><code>dim_time</code></td><td>Dimension</td><td><code>time_sk (PK), year, decade</code></td></tr>
+              <tr><td><code>dim_grammy_category</code></td><td>Dimension</td><td><code>category_sk (PK), category_name</code></td></tr>
+              <tr><td><code>fact_music_performance</code></td><td>Fact Table</td><td>Measures: <code>popularity, danceability, energy, valence, is_grammy_winner</code></td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 8: Airflow 3.1.8 Orchestration & Selective Retries -->
+    <section class="slide" data-notes="Section 6.11 requires orchestration using Apache Airflow 3.1.8 with the modern TaskFlow API. We used from airflow.sdk import dag, task. We strictly prohibited blanket retries. Transient failures get 2 retries; deterministic data quality failures get 0 retries so the failure surfaces immediately.">
+      <div class="slide-tag">Section 6.11 • Modern Orchestration</div>
+      <h2 class="slide-title">Apache Airflow 3.1.8 & TaskFlow API</h2>
+      <p class="slide-subtitle">Executable dependency model with justified selective retry policies and zero XCom bulk transport.</p>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">⚡ Airflow 3.1.8 TaskFlow API</span>
+            <span class="badge badge-cyan">airflow.sdk</span>
+          </div>
+          <div class="card-body">
+            <div class="code-block" style="font-size: 0.75rem;">
+<span class="code-keyword">from</span> airflow.sdk <span class="code-keyword">import</span> dag, task
+
+<span class="code-accent">@dag</span>(dag_id=<span class="code-success">"reliable_music_pipeline"</span>, schedule=<span class="code-keyword">None</span>)
+<span class="code-keyword">def</span> reliable_music_pipeline():
+    s_raw = extract_spotify_task()
+    s_val = validate_spotify_raw_task(s_raw)
+
+    g_raw = extract_grammys_task()
+    g_val = validate_grammys_raw_task(g_raw)
+
+    prep = transform_and_integrate_task(s_val, g_val)
+    prep_val = validate_prepared_task(prep)
+    load_dw_task(prep_val)
+            </div>
+            <p style="margin-top: 10px; font-size: 0.8rem; color: var(--text-muted);">
+              ✅ Pure reference-passing: only file paths and compact metadata dictionaries are passed through task interfaces.
+            </p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">🎯 Selective Retry Policy</span>
+            <span class="badge badge-purple">No Blanket Retries</span>
+          </div>
+          <div class="card-body">
+            <table class="table-clean" style="font-size: 0.76rem;">
+              <tr><th>Task</th><th>Failure Class</th><th>Retries</th><th>Reasoning</th></tr>
+              <tr>
+                <td><code>extract_spotify</code></td>
+                <td>Transient I/O</td>
+                <td><strong class="code-accent">2</strong></td>
+                <td>Mount latency resolves on retry.</td>
+              </tr>
+              <tr>
+                <td><code>extract_grammys</code></td>
+                <td>Transient DB</td>
+                <td><strong class="code-accent">2</strong></td>
+                <td>PostgreSQL socket recovery.</td>
+              </tr>
+              <tr>
+                <td><code>validate_*_raw</code></td>
+                <td>Deterministic DQ</td>
+                <td><strong class="code-fail">0</strong></td>
+                <td>Corrupt data fails identically; stop immediately.</td>
+              </tr>
+              <tr>
+                <td><code>validate_prepared</code></td>
+                <td>Deterministic DQ</td>
+                <td><strong class="code-fail">0</strong></td>
+                <td>Prevents corrupt data entering DW.</td>
+              </tr>
+              <tr>
+                <td><code>load_dw</code></td>
+                <td>Transient Lock</td>
+                <td><strong class="code-accent">1</strong></td>
+                <td>Deadlock clear on second attempt.</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 9: Test A — Successful Execution Evidence -->
+    <section class="slide" data-notes="Now we present Test A: Successful Execution. Running the complete pipeline end-to-end under manual run ID 2026-10-07. All 7 tasks succeeded in 39.14 seconds. The Data Warehouse loaded 113,549 fact rows, 475 winners, 17,645 artists, and 89,740 tracks without a single error.">
+      <div class="slide-tag">Section 7.1 • Reliability Test A</div>
+      <h2 class="slide-title">Test A: Successful End-to-End Run</h2>
+      <p class="slide-subtitle">Complete pipeline execution under critical policy passing all raw and prepared validation gates.</p>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">⏱️ Airflow Execution Timestamps</span>
+            <span class="badge badge-emerald">State: SUCCESS (39.1s)</span>
+          </div>
+          <div class="card-body">
+            <table class="table-clean" style="font-size: 0.76rem;">
+              <tr><th>Task Instance</th><th>State</th><th>Duration</th></tr>
+              <tr><td><code>extract_spotify</code></td><td><span class="badge badge-emerald">success</span></td><td>3.8s</td></tr>
+              <tr><td><code>extract_grammys</code></td><td><span class="badge badge-emerald">success</span></td><td>3.4s</td></tr>
+              <tr><td><code>validate_spotify_raw</code></td><td><span class="badge badge-emerald">success</span></td><td>9.6s</td></tr>
+              <tr><td><code>validate_grammys_raw</code></td><td><span class="badge badge-emerald">success</span></td><td>9.1s</td></tr>
+              <tr><td><code>transform_and_integrate</code></td><td><span class="badge badge-emerald">success</span></td><td>1.9s</td></tr>
+              <tr><td><code>validate_prepared</code></td><td><span class="badge badge-emerald">success</span></td><td>5.7s</td></tr>
+              <tr><td><code>load_dw</code></td><td><span class="badge badge-emerald">success</span></td><td>16.5s</td></tr>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">📦 Data Warehouse Loaded Metrics</span>
+            <span class="badge badge-cyan">dw_music_analytics</span>
+          </div>
+          <div class="card-body">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+              <div class="metric-box">
+                <span class="metric-value" style="color: var(--accent-emerald);">113,549</span>
+                <span class="metric-label">Fact Rows Loaded</span>
+              </div>
+              <div class="metric-box">
+                <span class="metric-value" style="color: var(--accent-cyan);">475</span>
+                <span class="metric-label">Grammy Winning Tracks</span>
+              </div>
+              <div class="metric-box">
+                <span class="metric-value">17,645</span>
+                <span class="metric-label">Unique Artists</span>
+              </div>
+              <div class="metric-box">
+                <span class="metric-value">89,740</span>
+                <span class="metric-label">Unique Tracks</span>
+              </div>
+            </div>
+            <p style="font-size: 0.8rem; color: #cbd5e1;">
+              ✅ 100% referential integrity verified. All foreign keys resolved to dimensional surrogate keys without orphaned records.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 10: Test B — Controlled Critical Failure Evidence -->
+    <section class="slide" data-notes="Test B proves controlled failure behavior. In Section 7.2, we intentionally injected year=1800 into the PostgreSQL Grammy source table. When the DAG ran, validate_grammys_raw failed immediately. As a result, transform_and_integrate, validate_prepared, and load_dw were automatically blocked with upstream_failed, protecting the Data Warehouse.">
+      <div class="slide-tag">Section 7.2 • Reliability Test B</div>
+      <h2 class="slide-title">Test B: Controlled Critical Quality Failure</h2>
+      <p class="slide-subtitle">Demonstrating automated failure isolation: halting execution and protecting the analytical store.</p>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">🛑 Airflow Task States: Downstream Block</span>
+            <span class="badge badge-rose">Controlled Halt</span>
+          </div>
+          <div class="card-body">
+            <table class="table-clean" style="font-size: 0.76rem;">
+              <tr><th>Task ID</th><th>Observed State</th><th>Engineering Behavior</th></tr>
+              <tr><td><code>extract_grammys</code></td><td><span class="badge badge-emerald">success</span></td><td>Extracted batch from PostgreSQL</td></tr>
+              <tr><td><code>validate_grammys_raw</code></td><td><span class="badge badge-rose">failed</span></td><td><strong>DQ-RAW-GRM-01 Violated (Year=1800)</strong></td></tr>
+              <tr><td><code>transform_and_integrate</code></td><td><span class="badge badge-amber">upstream_failed</span></td><td><strong>BLOCKED: Did not proceed</strong></td></tr>
+              <tr><td><code>validate_prepared</code></td><td><span class="badge badge-amber">upstream_failed</span></td><td><strong>BLOCKED: Did not proceed</strong></td></tr>
+              <tr><td><code>load_dw</code></td><td><span class="badge badge-amber">upstream_failed</span></td><td><strong>BLOCKED: DW Protected</strong></td></tr>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">📋 Great Expectations Audit Evidence</span>
+            <span class="badge badge-cyan">grammys_raw_validation.json</span>
+          </div>
+          <div class="card-body">
+            <div class="code-block" style="font-size: 0.72rem;">
+{
+  <span class="code-keyword">"dataset"</span>: <span class="code-success">"grammys_raw"</span>,
+  <span class="code-keyword">"success"</span>: <span class="code-fail">false</span>,
+  <span class="code-keyword">"rules_evaluated"</span>: [{
+    <span class="code-keyword">"rule_description"</span>: <span class="code-fail">"DQ-RAW-GRM-01 [Critical]: Year must fall in [1958, 2026]."</span>,
+    <span class="code-keyword">"success"</span>: <span class="code-fail">false</span>,
+    <span class="code-keyword">"observed_value"</span>: {
+      <span class="code-keyword">"unexpected_count"</span>: 1,
+      <span class="code-keyword">"partial_unexpected_list"</span>: [<span class="code-fail">1800</span>]
+    }
+  }]
+}
+            </div>
+            <p style="margin-top: 10px; font-size: 0.8rem; color: #cbd5e1;">
+              ✅ Machine-readable diagnostic evidence preserved in <code>gx/results/</code>. Downstream load prevented.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 11: Test C — Safe Rerun & Idempotency Evidence -->
+    <section class="slide" data-notes="Test C satisfies Section 7.3: Repeatability and Safe Rerun. We ran the exact same batch twice. Before rerun: 113,549 rows. After rerun: exactly 113,549 rows. Popularity sum: 3,778,820 before and after. This proves our composite grain unique constraint and ON CONFLICT DO UPDATE upsert completely prevents silent duplication.">
+      <div class="slide-tag">Section 7.3 • Reliability Test C</div>
+      <h2 class="slide-title">Test C: Repeatability & Safe Rerun</h2>
+      <p class="slide-subtitle">Empirical proof of 100% idempotency: repeated execution creates zero unintended duplicates.</p>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">🔁 Before vs. After Rerun Comparison</span>
+            <span class="badge badge-emerald">0 Discrepancy</span>
+          </div>
+          <div class="card-body">
+            <table class="table-clean" style="font-size: 0.76rem;">
+              <tr><th>Target Metric</th><th>Run 1 Count</th><th>Rerun 2 Count</th><th>Net Discrepancy</th></tr>
+              <tr><td><code>fact_music_performance</code></td><td>113,549</td><td>113,549</td><td><strong class="code-success">0 (Exact)</strong></td></tr>
+              <tr><td>Awarded Tracks (Winners)</td><td>475</td><td>475</td><td><strong class="code-success">0 (Exact)</strong></td></tr>
+              <tr><td><code>dim_artist</code> Records</td><td>17,645</td><td>17,645</td><td><strong class="code-success">0 (Exact)</strong></td></tr>
+              <tr><td><code>dim_track</code> Records</td><td>89,740</td><td>89,740</td><td><strong class="code-success">0 (Exact)</strong></td></tr>
+              <tr><td>Sum of <code>popularity</code></td><td>3,778,820</td><td>3,778,820</td><td><strong class="code-success">0.0 (Invariant)</strong></td></tr>
+              <tr><td>Mean of <code>danceability</code></td><td>0.5670</td><td>0.5670</td><td><strong class="code-success">0.0 (Invariant)</strong></td></tr>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">🔒 Architectural Mechanism</span>
+            <span class="badge badge-cyan">Atomic Upsert</span>
+          </div>
+          <div class="card-body">
+            <div class="code-block" style="font-size: 0.72rem; margin-bottom: 10px;">
+<span class="code-keyword">INSERT INTO</span> fact_music_performance (...)
+<span class="code-keyword">SELECT</span> ... <span class="code-keyword">FROM</span> temp_prepared_staging
+<span class="code-accent">ON CONFLICT</span> (track_sk, genre_sk, time_sk, category_sk) 
+<span class="code-keyword">DO UPDATE SET</span>
+  popularity = EXCLUDED.popularity,
+  danceability = EXCLUDED.danceability,
+  is_grammy_winner = EXCLUDED.is_grammy_winner,
+  loaded_at = CURRENT_TIMESTAMP;
+            </div>
+            <ul>
+              <li><strong>Atomic Rollback:</strong> Partial failures roll back cleanly in transaction blocks.</li>
+              <li><strong>Zero Poisoning:</strong> Re-executing never inflates metrics or corrupts aggregations.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 12: Analytics & Business Intelligence (The 3 KPIs) -->
+    <section class="slide" data-notes="Section 8.1 requires at least 3 KPIs and 3 visualizations querying the DW directly. Direct CSV connections were avoided. KPI 1 shows Grammy winners have higher Valence (0.53 vs 0.47) and +9.6 popularity points. KPI 2 shows Soul and Country have the highest popularity multiplier (+45.6 and +23.6 pts). KPI 3 shows explicit lyrics rose from 0% pre-1990 to 15.27% in the 2010s, with collaborations hitting 44.27%.">
+      <div class="slide-tag">Section 8.1 • Business Intelligence</div>
+      <h2 class="slide-title">Data Warehouse Analytics & Insights</h2>
+      <p class="slide-subtitle">Three interactive visualizations querying the PostgreSQL DW answering RQ-01, RQ-02, and RQ-03.</p>
+
+      <div class="grid-3">
+        <div class="card" style="padding: 14px;">
+          <div class="card-header" style="margin-bottom: 6px;">
+            <span class="card-title" style="font-size: 0.9rem;">KPI 1: Audio Fingerprint</span>
+            <span class="badge badge-cyan">RQ-01</span>
+          </div>
+          <div class="img-kpi-container">
+            <img src="./docs/evidence/kpi1_audio_profile.png" alt="KPI 1 Audio Profile">
+          </div>
+          <p style="font-size: 0.75rem; color: #cbd5e1; margin-top: 6px;">
+            <strong>Insight:</strong> Winners feature higher <strong>Valence (0.53 vs 0.47)</strong>, higher <strong>Energy (0.67 vs 0.64)</strong>, and +9.6 popularity points.
+          </p>
+        </div>
+
+        <div class="card" style="padding: 14px;">
+          <div class="card-header" style="margin-bottom: 6px;">
+            <span class="card-title" style="font-size: 0.9rem;">KPI 2: Genre Uplift</span>
+            <span class="badge badge-purple">RQ-02</span>
+          </div>
+          <div class="img-kpi-container">
+            <img src="./docs/evidence/kpi2_genre_popularity.png" alt="KPI 2 Genre Popularity">
+          </div>
+          <p style="font-size: 0.75rem; color: #cbd5e1; margin-top: 6px;">
+            <strong>Insight:</strong> Highest popularity multipliers: <strong>Soul (+45.6 pts)</strong> and <strong>Country (+23.6 pts)</strong> post-Grammy acclaim.
+          </p>
+        </div>
+
+        <div class="card" style="padding: 14px;">
+          <div class="card-header" style="margin-bottom: 6px;">
+            <span class="card-title" style="font-size: 0.9rem;">KPI 3: Lyrical & Feat. Trends</span>
+            <span class="badge badge-emerald">RQ-03</span>
+          </div>
+          <div class="img-kpi-container">
+            <img src="./docs/evidence/kpi3_temporal_trends.png" alt="KPI 3 Historical Trends">
+          </div>
+          <p style="font-size: 0.75rem; color: #cbd5e1; margin-top: 6px;">
+            <strong>Insight:</strong> Explicit content in winning songs rose from 0% (pre-1990) to <strong>15.27%</strong> in the 2010s, with collaborations reaching <strong>44.27%</strong>.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 13: Technical Defense & Key Takeaways -->
+    <section class="slide" data-notes="In conclusion, our solution achieves 100% compliance across all 7 evaluation categories. We delivered a reproducible Docker environment with Airflow 3.1.8 and PostgreSQL, automated Great Expectations gates, an idempotent Star Schema DW, and direct DW analytics. Thank you, professors. I am now ready for your questions.">
+      <div class="slide-tag">Technical Defense Summary • 100% Compliance</div>
+      <h2 class="slide-title">Conclusion & Defense Readiness</h2>
+      <p class="slide-subtitle">A fully observable, auditable, and resilient data engineering system ready for technical defense.</p>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">✅ Deliverables & Rubric Compliance</span>
+            <span class="badge badge-emerald">Score Target: 5.0 / 5.0</span>
+          </div>
+          <div class="card-body">
+            <ul>
+              <li><strong>Requirements & Architecture (0.40):</strong> RQ-01..03, full end-to-end traceability documented.</li>
+              <li><strong>Data Profiling & Risks (0.60):</strong> 7 categories covered in reproducible notebook.</li>
+              <li><strong>Transformation & Integration (0.60):</strong> Relational Grammy extraction & formal contract.</li>
+              <li><strong>Great Expectations Validation (0.80):</strong> 8 rules, 2 gates, machine-readable JSON logs.</li>
+              <li><strong>Airflow 3.1.8 Orchestration (0.90):</strong> TaskFlow API, selective retries, Tests A, B, and C verified.</li>
+              <li><strong>Dimensional DW & Analytics (0.40):</strong> PostgreSQL Star Schema & 3 visual KPIs.</li>
+              <li><strong>Repository & Documentation (0.30):</strong> All 16 README sections, zero secret leaks.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">🎯 Ready for Evaluator Q&A</span>
+            <span class="badge badge-cyan">Defense Points</span>
+          </div>
+          <div class="card-body">
+            <div class="metric-box" style="margin-bottom: 10px;">
+              <span class="metric-value" style="font-size: 1.1rem; color: var(--accent-cyan);">Q: Why not use SQLite?</span>
+              <span class="metric-label" style="text-transform: none; color: #e2e8f0;">A: SQLite lacks multi-user concurrent upsert locking and was explicitly forbidden in the workshop brief.</span>
+            </div>
+            <div class="metric-box" style="margin-bottom: 10px;">
+              <span class="metric-value" style="font-size: 1.1rem; color: var(--accent-purple);">Q: Why retries=0 on validation?</span>
+              <span class="metric-label" style="text-transform: none; color: #e2e8f0;">A: Quality violations are deterministic. Repeating validation without source changes reproduces identical failure.</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-value" style="font-size: 1.1rem; color: var(--accent-emerald);">Q: How is idempotency guaranteed?</span>
+              <span class="metric-label" style="text-transform: none; color: #e2e8f0;">A: Through composite unique grain constraint + atomic ON CONFLICT DO UPDATE in PostgreSQL.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Speaker Defense Drawer (N) -->
+  <aside id="defense-notes-drawer">
+    <div class="notes-title">
+      <span>💬 Evaluator Defense Script & Talking Points</span>
+      <span class="key-hint">Press N to Close</span>
+    </div>
+    <div id="notes-text" class="notes-content">
+      Welcome professors. Press Left / Right Arrow keys to navigate slides.
+    </div>
+  </aside>
+
+  <!-- Footer Navigation -->
+  <footer>
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <button class="btn-ctrl" onclick="prevSlide()" title="Previous Slide (Key: Left Arrow)">◀ Prev</button>
+      <button class="btn-ctrl" onclick="nextSlide()" title="Next Slide (Key: Right Arrow)">Next ▶</button>
+    </div>
+
+    <div class="progress-bar-container">
+      <div id="progress-fill" class="progress-bar-fill"></div>
+    </div>
+
+    <div style="display: flex; gap: 12px; align-items: center; color: var(--text-muted);">
+      <span>Navigate: <span class="key-hint">←</span> <span class="key-hint">→</span> or <span class="key-hint">Space</span></span>
+      <span>Notes: <span class="key-hint">N</span></span>
+    </div>
+  </footer>
+
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    const slideNumDisplay = document.getElementById('current-slide-num');
+    const progressFill = document.getElementById('progress-fill');
+    const notesDrawer = document.getElementById('defense-notes-drawer');
+    const notesText = document.getElementById('notes-text');
+    let currentIndex = 0;
+
+    function updateSlide(index) {
+      if (index < 0) index = 0;
+      if (index >= slides.length) index = slides.length - 1;
+      currentIndex = index;
+
+      slides.forEach((slide, i) => {
+        if (i === currentIndex) {
+          slide.classList.add('active');
+        } else {
+          slide.classList.remove('active');
+        }
+      });
+
+      // Update Header & Progress
+      slideNumDisplay.textContent = `Slide ${currentIndex + 1} of ${slides.length}`;
+      const progressPct = ((currentIndex + 1) / slides.length) * 100;
+      progressFill.style.width = `${progressPct}%`;
+
+      // Update Notes Drawer Content
+      const activeSlide = slides[currentIndex];
+      const note = activeSlide.getAttribute('data-notes') || 'No defense notes available for this slide.';
+      notesText.innerHTML = note;
+    }
+
+    function nextSlide() {
+      if (currentIndex < slides.length - 1) {
+        updateSlide(currentIndex + 1);
+      }
+    }
+
+    function prevSlide() {
+      if (currentIndex > 0) {
+        updateSlide(currentIndex - 1);
+      }
+    }
+
+    function toggleNotes() {
+      notesDrawer.classList.toggle('open');
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+          console.error(`Error attempting to enable fullscreen: ${err.message}`);
+        });
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
+    // Keyboard Event Listener
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        e.preventDefault();
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'Backspace' || e.key === 'PageUp') {
+        e.preventDefault();
+        prevSlide();
+      } else if (e.key.toLowerCase() === 'n') {
+        e.preventDefault();
+        toggleNotes();
+      } else if (e.key.toLowerCase() === 'f') {
+        e.preventDefault();
+        toggleFullscreen();
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        updateSlide(0);
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        updateSlide(slides.length - 1);
+      }
+    });
+
+    // Initialize first slide and notes
+    updateSlide(0);
+  </script>
+</body>
+</html>
