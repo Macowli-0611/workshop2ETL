@@ -1,19 +1,18 @@
-# Reporte de Evidencia: Test B — Falla Crítica Controlada de Calidad
+# Reliability Evidence Report: Test B — Controlled Critical Quality Failure
 **Workshop-2: Building a Reliable Batch Data Pipeline**
-*Curso: ETL (G01) — Sección 7.2 del Brief*
+*Course: ETL (G01) — Section 7.2 of the Brief*
 
 ---
 
-## 1. Declaración de la Falla Inducida
-* **Regla Crítica Evaluada:** `DQ-RAW-GRM-01` [Critical] — *"El año de premiación debe pertenecer al rango histórico válido [1958, 2026]"*.
-* **Condición Anómala Activada:** Se inyectó intencionalmente un registro en la base de datos relacional de origen (`source_music_db.grammy_awards`) con `year = 1800` (anterior al origen de la Recording Academy en 1958).
+## 1. Specification of the Induced Failure Condition
+* **Evaluated Critical Rule:** `DQ-RAW-GRM-01` [Critical] — *"Award edition year must fall within historical Academy range [1958, 2026]"*.
+* **Activated Anomaly:** Intentionally injected an invalid historical record in the relational source database (`source_music_db.grammy_awards`) with `year = 1800` (pre-dating the Recording Academy's establishment in 1958).
 * **DAG Run ID:** `manual__2026-10-07T22:33:55.085717+00:00`
 
 ---
 
-## 2. Comportamiento Observado en Apache Airflow 3.1.8
+## 2. Observed Airflow 3.1.8 Task Execution States
 
-### Tabla de Estados de Tarea (Task Instance States):
 ```text
 dag_id                  | task_id                 | state           | start_date                       | end_date
 ========================+=========================+=================+==================================+=================================
@@ -28,7 +27,7 @@ reliable_music_pipeline | load_dw                 | upstream_failed | 2026-10-07
 
 ---
 
-## 3. Evidencia Emitida por Great Expectations (`grammys_raw_validation.json`)
+## 3. Great Expectations Machine-Readable Evidence (`grammys_raw_validation.json`)
 ```json
 {
   "dataset": "grammys_raw",
@@ -37,7 +36,7 @@ reliable_music_pipeline | load_dw                 | upstream_failed | 2026-10-07
   "rules_evaluated": [
     {
       "expectation_type": "expect_column_values_to_be_between",
-      "rule_description": "DQ-RAW-GRM-01 [Critical]: El año debe pertenecer al rango histórico válido [1958, 2026].",
+      "rule_description": "DQ-RAW-GRM-01 [Critical]: Award year must fall within historical Academy range [1958, 2026].",
       "success": false,
       "observed_value": {
         "element_count": 4810,
@@ -52,8 +51,8 @@ reliable_music_pipeline | load_dw                 | upstream_failed | 2026-10-07
 
 ---
 
-## 4. Análisis y Explicación Técnica de Ingeniería
-1. **Detección Determinística:** La tarea `extract_grammys` extrajo los datos con éxito; la compuerta `validate_grammys_raw` identificó el año 1800 como una violación a la regla de rango $[1958, 2026]$.
-2. **Aislamiento Inmediato (`retries=0`):** Al ser una regla clasificada como `Critical`, la validación arrojó una excepción `CriticalDataQualityError` sin reintentos ciegos, marcando la tarea en estado `failed`.
-3. **Bloqueo de Downstream (`upstream_failed`):** El scheduler de Airflow detectó la falla en la dependencia upstream y **bloqueó de inmediato** las tareas de transformación (`transform_and_integrate`), validación preparada (`validate_prepared`) y carga al Data Warehouse (`load_dw`).
-4. **Protección del Almacén Analítico:** Ningún dato anómalo o corrupto llegó a la capa dimensional, preservando la pureza y confianza del Data Warehouse.
+## 4. Engineering Interpretation & System Analysis
+1. **Deterministic Quality Gate Trigger:** The extraction task succeeded; the raw validation gate `validate_grammys_raw` correctly detected the anomalous row `1800` outside the legitimate range $[1958, 2026]$.
+2. **Immediate Failure Isolation (`retries=0`):** Because the rule was designated `Critical`, the gate immediately raised `CriticalDataQualityError` without blind reattempts, transitioning the task instance to `failed`.
+3. **Downstream Block (`upstream_failed`):** Airflow's scheduler resolved dependencies and **immediately blocked** `transform_and_integrate`, `validate_prepared`, and `load_dw`.
+4. **Data Warehouse Protection:** No corrupt records were merged into the target analytical store, preserving data trust.

@@ -1,37 +1,38 @@
-# Documento de Requisitos Analíticos y Alcance (Fase 0)
+# Analytical Requirements & Solution Scope Document (Phase 0)
 **Workshop-2: Building a Reliable Batch Data Pipeline**
-*Curso: ETL (G01) — Universidad Autónoma de Occidente*
+*Course: ETL (G01) — Faculty of Engineering and Basic Sciences*  
+*Autonomous University of the West (UAO)*
 
 ---
 
-## 1. Declaración de Alcance (*Scope Statement*)
-El presente proyecto tiene como objetivo diseñar e implementar un sistema de ingeniería de datos por lotes (batch) que integre dos fuentes de datos no homogéneas: el catálogo y características sonoras de canciones de **Spotify** (`spotify_dataset.csv`) y el registro histórico de nominaciones y premiaciones de los **Grammy Awards** (`the_grammy_awards.csv` alojado en base de datos relacional PostgreSQL).
+## 1. Scope Statement
+The objective of this engineering solution is to design and implement a reliable, idempotent batch data pipeline that integrates two decoupled, heterogeneous sources: digital music catalog and audio characteristics from **Spotify** (`spotify_dataset.csv`) and the historical archive of honors and awards from the **Grammy Awards** (`the_grammy_awards.csv`, hosted in an operational PostgreSQL relational database).
 
-El Data Warehouse dimensional resultante soportará la toma de decisiones estratégicas de la industria musical, permitiendo a analistas de producto y directores de A&R (Artistas y Repertorio) evaluar el impacto tangible del reconocimiento académico/institucional (Grammys) sobre el consumo digital y perfil sonoro de las pistas musicales.
+The resulting dimensional Data Warehouse empowers music industry analysts, executive producers, and Artists and Repertoire (A&R) directors to evaluate the empirical correlation between formal institutional recognition (Grammys) and digital commercial consumption and sound profile on streaming platforms.
 
 ---
 
-## 2. Matriz de Requisitos Analíticos (Sección 6.1 del Brief)
+## 2. Analytical Requirements Matrix (Section 6.1 of the Brief)
 
-| ID | Requisito Analítico | Pregunta de Negocio / Decisión Soportada | Atributos Requeridos | Fuentes | KPI(s) Esperado(s) | Nivel de Detalle (Grano) |
+| ID | Analytical Requirement | Business Question / Decision Supported | Required Attributes | Source(s) | Expected KPI(s) | Required Level of Detail (Grain) |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **RQ-01** | **Perfil Acústico y Sonoro de Canciones Premiadas vs. No Premiadas** | ¿Existen patrones sonoros diferenciales (Danceability, Energy, Valence, Acousticness) que distingan a las canciones ganadoras y nominadas de las pistas del catálogo general? *Decisión: Optimización de producción y curaduría para postulaciones a premios.* | `track_name`, `artists`, `danceability`, `energy`, `valence`, `acousticness`, `tempo`, `nominee`, `artist`, `winner`, `category`, `year` | **Spotify:** Métricas de audio y nombres.<br>**Grammys:** Categoría, estado (ganador/nominado) y año. | **KPI 1.1:** Índice de Diferencial Acústico (*Avg Feature Score Ratio* Ganador vs No Nominado).<br>**KPI 1.2:** Perfil Sonoro Promedio por Estado de Galardón (*Danceability / Energy Radar*). | Por pista musical (`track_id`), año de premiación y categoría Grammy. |
-| **RQ-02** | **Impacto del Galardón Grammy en la Popularidad por Género Musical** | ¿Cómo varía la distribución del índice de popularidad en Spotify entre canciones ganadoras, nominadas y no nominadas a través de diferentes géneros? *Decisión: Asignación de presupuesto de marketing y promoción según género.* | `track_genre`, `popularity`, `track_name`, `artists`, `nominee`, `artist`, `winner`, `category` | **Spotify:** `track_genre`, `popularity`.<br>**Grammys:** `category`, `winner`. | **KPI 2.1:** Popularidad Promedio por Estatus de Premiación (Ganador vs Nominado vs Sin nominación).<br>**KPI 2.2:** Tasa de Concentración de Alta Popularidad (% canciones con `popularity` > 70 en pistas galardonadas vs catálogo general). | Por género musical (`track_genre`) y estatus de reconocimiento. |
-| **RQ-03** | **Tendencia Histórica de Colaboraciones y Contenido Explícito en Premiaciones** | ¿Cómo ha evolucionado la proporción de canciones premiadas con múltiples artistas (colaboraciones) y contenido explícito a lo largo de las décadas en comparación con las tendencias de streaming? *Decisión: Políticas editoriales y contratación de featurings.* | `year`, `explicit`, `artists`, `artist`, `workers`, `winner`, `category`, `nominee` | **Spotify:** `explicit`, lista de artistas colaboradores.<br>**Grammys:** Año de edición, categoría y créditos. | **KPI 3.1:** Tasa de Contenido Explícito Premiado (% de ganadoras con `explicit = True` por década/año).<br>**KPI 3.2:** Ratio de Colaboración (*% tracks con 2 o más artistas acreditados* en galardonados vs catálogo). | Por año de edición de los premios Grammy y década. |
+| **RQ-01** | **Acoustic & Perceptual Profile of Awarded vs. Non-Awarded Tracks** | Do specific audio features (Danceability, Energy, Valence, Acousticness) distinguish Grammy-winning and nominated songs from standard catalog tracks? *Decision: Guide production choices and repertoire curation for awards consideration.* | `track_name`, `artists`, `danceability`, `energy`, `valence`, `acousticness`, `tempo`, `nominee`, `artist`, `winner`, `category`, `year` | **Spotify:** Audio features & metadata.<br>**Grammys:** Category, award status, year. | **KPI 1.1:** Acoustic Differential Ratio (Winner vs. Catalog).<br>**KPI 1.2:** Audio Feature Fingerprint by Award Tier. | Individual audio track (`track_id`), award edition year, and category. |
+| **RQ-02** | **Impact of Grammy Acclaim on Popularity Multiplier Across Genres** | How does the distribution of Spotify popularity vary between Grammy winners, nominees, and non-awarded tracks across musical genres? *Decision: Budget allocation for genre marketing and post-nomination promotional spend.* | `track_genre`, `popularity`, `track_name`, `artists`, `nominee`, `artist`, `winner`, `category` | **Spotify:** `track_genre`, `popularity`.<br>**Grammys:** `category`, `winner`. | **KPI 2.1:** Mean Popularity by Award Tier.<br>**KPI 2.2:** Genre Popularity Uplift Delta (Winners vs. General Catalog). | Musical genre (`track_genre`) and award acclaim tier. |
+| **RQ-03** | **Historical Evolution of Collaborations and Explicit Content in Awarded Music** | How has the proportion of awarded songs featuring multiple credited artists (collaborations) and explicit lyrical content evolved over decades compared to streaming catalog trends? *Decision: Editorial guidelines and collaboration investments.* | `year`, `explicit`, `artists`, `artist`, `workers`, `winner`, `category`, `nominee` | **Spotify:** `explicit`, credited artist list.<br>**Grammys:** Edition year, category, credits. | **KPI 3.1:** Awarded Explicit Content Share Rate (% winners with `explicit = True` by decade).<br>**KPI 3.2:** Awarded Collaboration Ratio (% tracks with $\ge 2$ credited artists). | Award decade and edition year. |
 
 ---
 
-## 3. Justificación de la Integración Cruzada
-Ninguna de las dos fuentes puede responder a estas necesidades de manera aislada:
-1. **Spotify** cuenta con telemetría de consumo (`popularity`) y métricas perceptuales de procesamiento de señales de audio (`danceability`, `energy`, etc.), pero carece de metadatos sobre aclamación de la crítica, nominaciones y premios de la industria.
-2. **Grammy Awards** contiene el prestigio y registro oficial histórico de la Recording Academy (desde 1958), pero no incluye métricas de reproducción, atributos acústicos ni categorización estandarizada por géneros de consumo moderno.
+## 3. Justification for Cross-Source Integration
+Neither dataset can satisfy these analytical needs independently:
+1. **Spotify** provides fine-grained perceptual signal processing attributes (`danceability`, `energy`, `acousticness`) and real-world digital streaming telemetry (`popularity`), but lacks critical historical industry prestige, nomination records, and awards data.
+2. **Grammy Awards** records the definitive 60+ year historical archive of Recording Academy accolades (since 1958), but contains zero digital consumption telemetry, audio signal features, or modern streaming genre classifications.
 
-La unión contractual y armonización de ambas fuentes crea un activo de datos único que correlaciona mérito artístico institucional con consumo y características perceptuales del audio.
+Unifying both sources through a formal Integration Contract establishes a novel analytical asset correlating institutional artistic acclaim with digital listener consumption patterns.
 
 ---
 
-## 4. Cadena de Trazabilidad Descendente
-Cada uno de los 3 requisitos analíticos anteriores rige las siguientes fases:
-* **Fase de Perfilamiento:** Búsqueda activa de discrepancias ortográficas en nombres de artistas (`artists` con separadores `;` vs `artist` en Grammys con conectores tipo `Featuring` o comas), presencia de nulos en `popularity` y valores fuera de escala en atributos acústicos ($[0.0, 1.0]$).
-* **Fase de Reglas GX:** Reglas estrictas para asegurar que ningún registro cargado al DW carezca de año válido, métricas sonoras en rango, o identificadores únicos.
-* **Modelo Dimensional:** Fact table diseñada para almacenar medidas numéricas (`popularity`, métricas acústicas, conteo de victorias) y dimensiones de contexto (`dim_artist`, `dim_track`, `dim_genre`, `dim_grammy_category`, `dim_time`).
+## 4. End-to-End Traceability Chain
+Every downstream engineering decision traces back directly to these requirements:
+* **Profiling Phase:** Specifically targets artist naming conventions (semicolon-separated in Spotify vs. collaborative tokens in Grammys), null presence in popularity, and boundary verification of acoustic metrics ($[0.0, 1.0]$).
+* **Great Expectations Gates:** Enforces strict non-null and valid range constraints to ensure no corrupt timestamps or broken keys enter the Data Warehouse.
+* **Dimensional Modeling:** Directly drives fact table measure definitions (`popularity`, audio features, award counts) and dimension hierarchies (`dim_artist`, `dim_track`, `dim_genre`, `dim_time`, `dim_grammy_category`).

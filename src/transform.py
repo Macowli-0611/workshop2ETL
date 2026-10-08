@@ -1,16 +1,16 @@
 """
-Módulo de Transformación e Integración: src/transform.py
--------------------------------------------------------
-Implementa la fase única de ingeniería que aplica:
-- Limpieza y desduplicación basadas en evidencia del perfilamiento.
-- Armonización y normalización textual (contrato de integración).
-- Cruce entre catálogo de Spotify y premios Grammy.
-- Derivación de medidas y atributos para el modelo dimensional.
+Data Transformation & Integration Module: src/transform.py
+---------------------------------------------------------
+Implements the unified engineering phase:
+- Evidence-based cleaning and deduplication derived from profiling.
+- Textual normalization and harmonization.
+- Execution of the cross-source integration contract (Spotify catalog + Grammy Awards).
+- Derivation of analytical measures and dimensions for the star schema.
 
-Contrato de Integración:
-- Claves de cruce: (normalized_track_name, normalized_artist)
-- Cardinalidad: N-a-1 (múltiples apariciones de un track en diferentes géneros hacia su galardón).
-- Registros no coincidentes: Preservados con bandera is_grammy_winner = False y categoría por defecto.
+Integration Contract:
+- Matching Keys: (clean_track_name, clean_primary_artist)
+- Cardinality: N-to-1 (multiple catalog occurrences of a track across genres mapped to single award event).
+- Unmatched Records: Preserved with is_grammy_winner = False and mapped to default dimension keys (SK = 0).
 """
 
 import os
@@ -23,57 +23,56 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 logger = logging.getLogger("ETL_Transform")
 
 def _normalize_string(text_val: str) -> str:
-    """Normaliza cadenas de texto para emparejamiento determinístico."""
+    """Normalizes string fields for deterministic cross-source matching."""
     if pd.isna(text_val):
         return ""
     text_clean = str(text_val).lower().strip()
-    # Eliminar signos de puntuación periféricos y comillas
+    # Remove peripheral punctuation, brackets and quotes
     text_clean = re.sub(r'["\'\(\)\[\],.;:!?\-]', ' ', text_clean)
     text_clean = re.sub(r'\s+', ' ', text_clean).strip()
     return text_clean
 
 def _extract_primary_artist(artist_str: str) -> str:
-    """Extrae el artista principal para normalizar colaboraciones."""
+    """Extracts primary artist from delimited collaboration strings."""
     if pd.isna(artist_str):
         return "Unknown Artist"
-    # En Spotify vienen separados por ';'
+    # Spotify uses semicolon delimiters
     first_part = str(artist_str).split(";")[0]
-    # En Grammys pueden venir con Featuring, &, with
+    # Grammys use collaboration tokens (featuring, feat., &, with)
     first_part = re.split(r'\b(featuring|feat\.|&|with)\b', first_part, flags=re.IGNORECASE)[0]
     return first_part.strip()
 
 def transform_and_integrate(spotify_raw_path: str, grammys_raw_path: str, output_path: str) -> str:
     """
-    Ejecuta la limpieza, armonización, cruce e integración de datos.
-    Guarda el dataset preparado en output_path (Parquet) y retorna su ruta.
+    Executes cleaning, harmonization, cross-matching and metric derivation.
+    Persists ready-to-load dataset to output_path (Parquet) and returns reference.
     """
-    logger.info("Iniciando fase de transformación e integración...")
+    logger.info("Executing transformation and integration phase...")
 
-    # 1. Cargar fuentes crudas
+    # 1. Load raw staging artifacts
     df_spotify = pd.read_parquet(spotify_raw_path) if spotify_raw_path.endswith(".parquet") else pd.read_csv(spotify_raw_path)
     df_grammys = pd.read_parquet(grammys_raw_path) if grammys_raw_path.endswith(".parquet") else pd.read_csv(grammys_raw_path)
 
     initial_spotify_rows = len(df_spotify)
     initial_grammy_rows = len(df_grammys)
-    logger.info(f"Registros entrantes: Spotify={initial_spotify_rows:,}, Grammys={initial_grammy_rows:,}")
+    logger.info(f"Incoming records: Spotify={initial_spotify_rows:,}, Grammys={initial_grammy_rows:,}")
 
-    # 2. Limpieza de Spotify basada en evidencia de perfilamiento
-    # Descartar nulos en metadatos críticos
+    # 2. Evidence-based cleaning on Spotify catalog
+    # Drop rows with corrupted / missing essential metadata
     df_spotify = df_spotify.dropna(subset=["track_name", "artists", "track_id"])
-    # Filtrar pistas con duración física inválida (<= 1000 ms)
+    # Filter physical impossibilities (duration <= 1000 ms)
     df_spotify = df_spotify[df_spotify["duration_ms"] > 1000]
-    # Desduplicar tuplas exactas (track_id, track_genre)
+    # Deduplicate exact tuples on (track_id, track_genre)
     df_spotify = df_spotify.drop_duplicates(subset=["track_id", "track_genre"])
 
-    logger.info(f"Spotify post-limpieza: {len(df_spotify):,} filas (removidas {initial_spotify_rows - len(df_spotify):,} filas inválidas/duplicadas).")
+    logger.info(f"Spotify post-cleaning: {len(df_spotify):,} rows (removed {initial_spotify_rows - len(df_spotify):,} corrupted/duplicate rows).")
 
-    # 3. Limpieza y preparación de Grammys
+    # 3. Grammy source cleaning and aggregation
     df_grammys = df_grammys.dropna(subset=["nominee"])
     df_grammys["clean_nominee"] = df_grammys["nominee"].apply(_normalize_string)
     df_grammys["clean_grammy_artist"] = df_grammys["artist"].apply(_extract_primary_artist).apply(_normalize_string)
 
-    # Si hay múltiples premios para la misma canción, consolidamos las categorías más representativas
-    # Seleccionamos una fila por obra/artista con mayor año y conteo de premios
+    # Consolidate multiple award categories for the same track/artist
     grammy_agg = df_grammys.groupby(["clean_nominee", "clean_grammy_artist"]).agg({
         "year": "max",
         "category": "first",
@@ -81,16 +80,15 @@ def transform_and_integrate(spotify_raw_path: str, grammys_raw_path: str, output
         "title": "count"
     }).reset_index().rename(columns={"title": "award_count", "winner": "is_grammy_winner"})
 
-    # 4. Normalización de Spotify para el Contrato de Integración
+    # 4. Textual normalization for the Integration Contract
     df_spotify["clean_track_name"] = df_spotify["track_name"].apply(_normalize_string)
     df_spotify["primary_artist"] = df_spotify["artists"].apply(_extract_primary_artist)
     df_spotify["clean_spotify_artist"] = df_spotify["primary_artist"].apply(_normalize_string)
 
-    # Identificar tipo de artista
+    # Derive artist classification
     df_spotify["artist_type"] = np.where(df_spotify["artists"].str.contains(";", na=False), "Collaboration", "Solo")
 
-    # 5. Ejecutar Contrato de Integración (Left Join del catálogo con Grammys)
-    # Emparejamiento prioritario: (clean_track_name, clean_spotify_artist)
+    # 5. Execute Integration Contract (Left Join preserving entire catalog)
     df_integrated = df_spotify.merge(
         grammy_agg,
         left_on=["clean_track_name", "clean_spotify_artist"],
@@ -98,25 +96,25 @@ def transform_and_integrate(spotify_raw_path: str, grammys_raw_path: str, output
         how="left"
     )
 
-    # 6. Manejo de Registros No Coincidentes (Unmatched Records)
+    # 6. Treatment of Unmatched Catalog Records
     df_integrated["is_grammy_winner"] = df_integrated["is_grammy_winner"].fillna(False).astype(bool)
-    df_integrated["is_grammy_nominee"] = df_integrated["is_grammy_winner"] # En este dataset todos los registros de premios fueron ganadores/nominados
+    df_integrated["is_grammy_nominee"] = df_integrated["is_grammy_winner"]
     df_integrated["award_count"] = df_integrated["award_count"].fillna(0).astype(int)
-    df_integrated["grammy_category"] = df_integrated["category"].fillna("Sin Nominación / No Aplica")
+    df_integrated["grammy_category"] = df_integrated["category"].fillna("No Nomination / Not Applicable")
     
-    # Manejo de dimensión temporal: año de premiación (0 si no aplica)
+    # Temporal dimension derivation
     df_integrated["award_year"] = df_integrated["year"].fillna(0).astype(int)
     df_integrated["decade"] = np.where(
         df_integrated["award_year"] > 0,
         ((df_integrated["award_year"] // 10) * 10).astype(str) + "s",
-        "Desconocida"
+        "Unknown"
     )
 
-    # 7. Formatear y seleccionar columnas preparadas para el Data Warehouse
+    # 7. Structure prepared dimensional schema
     prepared_df = pd.DataFrame({
         "track_id_spotify": df_integrated["track_id"],
         "track_name": df_integrated["track_name"],
-        "album_name": df_integrated["album_name"].fillna("Sin Álbum"),
+        "album_name": df_integrated["album_name"].fillna("Single / Unknown Album"),
         "artist_name": df_integrated["primary_artist"],
         "artist_type": df_integrated["artist_type"],
         "genre_name": df_integrated["track_genre"],
@@ -137,17 +135,17 @@ def transform_and_integrate(spotify_raw_path: str, grammys_raw_path: str, output
         "award_count": df_integrated["award_count"]
     })
 
-    # Desduplicar tupla final del grano
+    # Enforce unique business grain
     prepared_df = prepared_df.drop_duplicates(subset=["track_id_spotify", "genre_name", "award_year", "grammy_category"])
 
     total_prepared = len(prepared_df)
     total_winners = prepared_df["is_grammy_winner"].sum()
-    logger.info(f"Integración completada: {total_prepared:,} filas preparadas.")
-    logger.info(f"Pistas con reconocimiento Grammy identificadas: {total_winners:,} ({total_winners / total_prepared * 100:.2f}% del catálogo).")
+    logger.info(f"Integration finalized: {total_prepared:,} prepared load-ready rows.")
+    logger.info(f"Tracks with confirmed Grammy recognition: {total_winners:,} ({total_winners / total_prepared * 100:.2f}% of catalog).")
 
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     prepared_df.to_parquet(output_path, index=False)
-    logger.info(f"Dataset preparado guardado en staging: {output_path}")
+    logger.info(f"Prepared dimensional dataset saved to: {output_path}")
 
     return output_path
 
@@ -157,4 +155,4 @@ if __name__ == "__main__":
         "data/staging/grammys_raw.parquet",
         "data/staging/prepared_music_data.parquet"
     )
-    print("Archivo transformado generado en:", out)
+    print("Prepared artifact persisted to:", out)

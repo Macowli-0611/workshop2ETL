@@ -1,17 +1,17 @@
-# Reporte de Evidencia: Test C — Repetibilidad y Reejecución Segura (Safe Rerun)
+# Reliability Evidence Report: Test C — Repeatability & Safe Rerun (Idempotency)
 **Workshop-2: Building a Reliable Batch Data Pipeline**
-*Curso: ETL (G01) — Sección 7.3 del Brief*
+*Course: ETL (G01) — Section 7.3 of the Brief*
 
 ---
 
-## 1. Declaración de la Estrategia de Idempotencia
-* **Principio de Ingeniería:** *"A rerun must not silently corrupt the analytical target."*
-* **Mecanismo Implementado:** Estrategia de **Upsert Controlado / Reemplazo Atómico por Grano de Negocio**.
-* **Restricción Clave:**
+## 1. Idempotency Strategy Declaration
+* **Engineering Principle:** *"A rerun must not silently corrupt the analytical target."*
+* **Implemented Mechanism:** **Atomic Upsert Controlled by Natural Business Grain**.
+* **Key Referential Constraint:**
   ```sql
   CONSTRAINT uq_fact_grain UNIQUE (track_sk, genre_sk, time_sk, category_sk)
   ```
-* **Comando SQL de Carga:**
+* **Target Load Logic:**
   ```sql
   INSERT INTO fact_music_performance (...)
   SELECT ... FROM temp_prepared_staging
@@ -32,19 +32,19 @@
 
 ---
 
-## 2. Comparativo Cuantitativo Antes y Después de la Reejecución
+## 2. Quantitative Comparison Before and After Rerun
 
-| Tabla / Métrica Evaluada | Conteo Previo (Run 1) | Conteo Posterior (Rerun 2) | Variación Neta | Estado de Idempotencia |
+| Target Metric / Table Evaluated | Baseline Run 1 Count | Rerun 2 Count | Net Discrepancy | Idempotency Verification |
 | :--- | :---: | :---: | :---: | :---: |
-| `fact_music_performance` (Total Filas) | **113,549** | **113,549** | **0** | **100% Idempotente** |
-| Pistas Ganadoras de Grammy (`is_grammy_winner = True`) | **475** | **475** | **0** | **Sin duplicados** |
-| `dim_artist` (Artistas únicos) | **17,645** | **17,645** | **0** | **Sin duplicados** |
-| `dim_track` (Pistas únicas) | **89,740** | **89,740** | **0** | **Sin duplicados** |
-| `dim_genre` (Géneros de catálogo) | **114** | **114** | **0** | **Sin duplicados** |
-| Suma Total de Medida `popularity` | **3,778,820** | **3,778,820** | **0.0** | **Invariante** |
-| Promedio de Medida `danceability` | **0.5670** | **0.5670** | **0.0** | **Invariante** |
+| `fact_music_performance` (Total Rows) | **113,549** | **113,549** | **0** | **100% Idempotent** |
+| Grammy Awarded Tracks (`is_grammy_winner = True`) | **475** | **475** | **0** | **Zero Duplication** |
+| `dim_artist` (Unique Artists) | **17,645** | **17,645** | **0** | **Zero Duplication** |
+| `dim_track` (Unique Catalog Tracks) | **89,740** | **89,740** | **0** | **Zero Duplication** |
+| `dim_genre` (Catalog Music Genres) | **114** | **114** | **0** | **Zero Duplication** |
+| Total Sum of Measure `popularity` | **3,778,820** | **3,778,820** | **0.0** | **Exact Invariant** |
+| Mean of Measure `danceability` | **0.5670** | **0.5670** | **0.0** | **Exact Invariant** |
 
 ---
 
-## 3. Tratamiento de Fallas Parciales
-Si una ejecución se interrumpe antes de la tarea de carga, la transacción en PostgreSQL se cancela automáticamente mediante el bloque transaccional `with engine.begin() as conn:`. Al reiniciar el DAG, el rerun sobrescribe o completa las tuplas correspondientes de manera atómica, garantizando que el Data Warehouse nunca quede en un estado inconsistente o semi-cargado.
+## 3. Treatment of Partially Completed or Interrupted Runs
+If a pipeline run is halted or disconnected during loading, PostgreSQL transactional boundaries (`with engine.begin() as conn:`) ensure that uncommitted modifications are atomically rolled back. On the subsequent retry or rerun, the upsert logic updates or completes missing rows cleanly, ensuring that partial runs never leave orphaned duplicates or skewed aggregations.

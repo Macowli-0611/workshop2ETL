@@ -1,11 +1,11 @@
 """
-Módulo de Carga al Data Warehouse: src/load.py
----------------------------------------------
-Implementa la carga dimensional e idempotente (Safe Rerun) en PostgreSQL:
-- Carga y resolución de claves subrogadas para dimensiones:
+Data Warehouse Loading Module: src/load.py
+------------------------------------------
+Implements the final dimensional and idempotent ETL load into PostgreSQL:
+- Surrogate key resolution and population for dimensions:
   dim_artist, dim_track, dim_genre, dim_time, dim_grammy_category.
-- Carga de la tabla de hechos fact_music_performance mediante ON CONFLICT DO UPDATE
-  asegurando que ejecuciones repetidas no dupliquen filas ni corrompan métricas.
+- Atomically loads fact_music_performance via controlled upsert (ON CONFLICT DO UPDATE)
+  guaranteeing that repeated pipeline executions produce 0 duplicate records (Safe Rerun).
 """
 
 import os
@@ -18,21 +18,21 @@ logger = logging.getLogger("ETL_Load")
 
 def load_data_warehouse(prepared_path: str, dw_url: str, batch_id: str = "batch_001") -> dict:
     """
-    Carga el dataset preparado en el Data Warehouse dimensional de manera idempotente.
-    Retorna métricas de filas cargadas para auditoría y evidencia de confiabilidad.
+    Loads prepared dataset into PostgreSQL dimensional Data Warehouse idempotently.
+    Returns audit load summary metrics for engineering reliability verification.
     """
-    logger.info(f"Iniciando carga al Data Warehouse ({dw_url.split('@')[-1]})...")
+    logger.info(f"Initiating Data Warehouse loading ({dw_url.split('@')[-1]})...")
     df = pd.read_parquet(prepared_path) if prepared_path.endswith(".parquet") else pd.read_csv(prepared_path)
     total_records = len(df)
-    logger.info(f"Total registros preparados a procesar: {total_records:,}")
+    logger.info(f"Total prepared records to process: {total_records:,}")
 
     engine = create_engine(dw_url)
 
     with engine.begin() as conn:
         # ----------------------------------------------------------
-        # 1. Cargar Dimensión: dim_artist
+        # 1. Populate Dimension: dim_artist
         # ----------------------------------------------------------
-        logger.info("Cargando dimensión dim_artist...")
+        logger.info("Loading dimension dim_artist...")
         artists_df = df[["artist_name", "artist_type"]].drop_duplicates(subset=["artist_name"])
         artists_df.to_sql("temp_dim_artist", con=conn, if_exists="replace", index=False)
         conn.execute(text("""
@@ -44,9 +44,9 @@ def load_data_warehouse(prepared_path: str, dw_url: str, batch_id: str = "batch_
         """))
 
         # ----------------------------------------------------------
-        # 2. Cargar Dimensión: dim_genre
+        # 2. Populate Dimension: dim_genre
         # ----------------------------------------------------------
-        logger.info("Cargando dimensión dim_genre...")
+        logger.info("Loading dimension dim_genre...")
         genres_df = df[["genre_name"]].drop_duplicates(subset=["genre_name"])
         genres_df.to_sql("temp_dim_genre", con=conn, if_exists="replace", index=False)
         conn.execute(text("""
@@ -57,9 +57,9 @@ def load_data_warehouse(prepared_path: str, dw_url: str, batch_id: str = "batch_
         """))
 
         # ----------------------------------------------------------
-        # 3. Cargar Dimensión: dim_track
+        # 3. Populate Dimension: dim_track
         # ----------------------------------------------------------
-        logger.info("Cargando dimensión dim_track...")
+        logger.info("Loading dimension dim_track...")
         tracks_df = df[["track_id_spotify", "track_name", "album_name", "duration_ms", "explicit"]].drop_duplicates(subset=["track_id_spotify"])
         tracks_df.to_sql("temp_dim_track", con=conn, if_exists="replace", index=False)
         conn.execute(text("""
@@ -72,23 +72,23 @@ def load_data_warehouse(prepared_path: str, dw_url: str, batch_id: str = "batch_
         """))
 
         # ----------------------------------------------------------
-        # 4. Cargar Dimensión: dim_grammy_category
+        # 4. Populate Dimension: dim_grammy_category
         # ----------------------------------------------------------
-        logger.info("Cargando dimensión dim_grammy_category...")
+        logger.info("Loading dimension dim_grammy_category...")
         categories_df = df[["grammy_category"]].drop_duplicates(subset=["grammy_category"])
         categories_df.to_sql("temp_dim_cat", con=conn, if_exists="replace", index=False)
         conn.execute(text("""
             INSERT INTO dim_grammy_category (category_name)
             SELECT grammy_category FROM temp_dim_cat
-            WHERE grammy_category != 'Sin Nominación / No Aplica'
+            WHERE grammy_category != 'No Nomination / Not Applicable'
             ON CONFLICT (category_name) DO NOTHING;
             DROP TABLE temp_dim_cat;
         """))
 
         # ----------------------------------------------------------
-        # 5. Cargar Dimensión: dim_time
+        # 5. Populate Dimension: dim_time
         # ----------------------------------------------------------
-        logger.info("Cargando dimensión dim_time...")
+        logger.info("Loading dimension dim_time...")
         time_df = df[["award_year", "decade"]].drop_duplicates(subset=["award_year"])
         time_df.to_sql("temp_dim_time", con=conn, if_exists="replace", index=False)
         conn.execute(text("""
@@ -100,11 +100,10 @@ def load_data_warehouse(prepared_path: str, dw_url: str, batch_id: str = "batch_
         """))
 
         # ----------------------------------------------------------
-        # 6. Mapear Claves Subrogadas y Cargar Tabla de Hechos
+        # 6. Map Surrogate Keys and Load Fact Table
         # ----------------------------------------------------------
-        logger.info("Mapeando claves subrogadas y cargando fact_music_performance...")
+        logger.info("Mapping dimension surrogate keys and loading fact_music_performance...")
         
-        # Subir dataset preparado a tabla temporal para join directo en PostgreSQL
         df["batch_id"] = batch_id
         df.to_sql("temp_prepared_staging", con=conn, if_exists="replace", index=False)
 
@@ -170,7 +169,7 @@ def load_data_warehouse(prepared_path: str, dw_url: str, batch_id: str = "batch_
         conn.execute(upsert_fact_query)
 
     # --------------------------------------------------------------
-    # 7. Resumen de Carga y Reconciliación
+    # 7. Post-Load Audit Reconciliation
     # --------------------------------------------------------------
     with engine.connect() as conn:
         fact_count = conn.execute(text("SELECT COUNT(*) FROM fact_music_performance;")).scalar()
@@ -187,11 +186,11 @@ def load_data_warehouse(prepared_path: str, dw_url: str, batch_id: str = "batch_
     }
 
     logger.info("="*50)
-    logger.info("RESUMEN DE CARGA AL DATA WAREHOUSE:")
-    logger.info(f" - Filas en fact_music_performance: {fact_count:,}")
-    logger.info(f" - Pistas galardonadas en DW: {winners_count:,}")
-    logger.info(f" - Artistas en dimensión: {artist_count:,}")
-    logger.info(f" - Canciones en dimensión: {track_count:,}")
+    logger.info("DATA WAREHOUSE LOAD RECONCILIATION SUMMARY:")
+    logger.info(f" - Rows in fact_music_performance: {fact_count:,}")
+    logger.info(f" - Awarded tracks populated in DW: {winners_count:,}")
+    logger.info(f" - Artists in dimension: {artist_count:,}")
+    logger.info(f" - Tracks in dimension: {track_count:,}")
     logger.info("="*50)
 
     return metrics
@@ -208,4 +207,4 @@ if __name__ == "__main__":
     dw_url = f"postgresql://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}"
 
     res = load_data_warehouse("data/staging/prepared_music_data.parquet", dw_url)
-    print("Métricas de carga:", res)
+    print("Load metrics:", res)

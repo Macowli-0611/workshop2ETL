@@ -1,13 +1,13 @@
 """
-Módulo de Extracción de Datos: src/extract.py
---------------------------------------------
-Maneja la extracción independiente de las dos fuentes heterogéneas:
-1. Spotify Dataset (desde archivo CSV).
-2. Grammy Awards (desde la base de datos relacional PostgreSQL).
+Data Extraction Module: src/extract.py
+--------------------------------------
+Handles decoupled extraction from two heterogeneous sources:
+1. Spotify Dataset (from local CSV file).
+2. Grammy Awards (from relational PostgreSQL database).
 
-Principio de ingeniería:
-La extracción no aplica limpieza prematura para no ocultar problemas de calidad
-a la compuerta de validación raw.
+Engineering Principle (Section 4.2 & 6.7):
+Extraction does not perform premature cleaning to avoid masking raw source anomalies
+from the automated raw validation gate.
 """
 
 import os
@@ -20,30 +20,30 @@ logger = logging.getLogger("ETL_Extract")
 
 def extract_spotify(csv_path: str, output_path: str) -> str:
     """
-    Extrae los datos crudos de Spotify desde el archivo CSV provisto.
-    Guarda el resultado en almacenamiento intermedio (Parquet) y retorna su ruta.
+    Extracts raw Spotify catalog data from local CSV source.
+    Persists raw output as staging Parquet and returns file path reference.
     """
-    logger.info(f"Iniciando extracción de Spotify desde: {csv_path}")
+    logger.info(f"Initiating Spotify extraction from: {csv_path}")
     if not os.path.exists(csv_path):
-        raise FileNotFoundError(f"Archivo de Spotify no encontrado en la ruta: {csv_path}")
+        raise FileNotFoundError(f"Spotify CSV file not found at: {csv_path}")
 
-    # Lectura cruda sin alteraciones para permitir que GX evalúe el estado real
+    # Read raw data directly without premature cleaning
     df_spotify = pd.read_csv(csv_path)
     total_rows = len(df_spotify)
-    logger.info(f"Spotify extraído con éxito: {total_rows:,} registros, {df_spotify.shape[1]} columnas.")
+    logger.info(f"Spotify successfully extracted: {total_rows:,} records, {df_spotify.shape[1]} columns.")
 
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     df_spotify.to_parquet(output_path, index=False)
-    logger.info(f"Dataset crudo de Spotify guardado en staging: {output_path}")
+    logger.info(f"Raw Spotify dataset persisted to staging: {output_path}")
 
     return output_path
 
 def extract_grammys(db_url: str, output_path: str) -> str:
     """
-    Extrae los datos crudos de Grammy Awards desde la base de datos relacional PostgreSQL.
-    Cumple con el requerimiento de la Sección 4.3 del Brief.
+    Extracts raw Grammy Awards records from relational PostgreSQL database.
+    Complies strictly with Section 4.3 requirement (relational source extraction).
     """
-    logger.info(f"Iniciando extracción de Grammy Awards desde base de datos relacional.")
+    logger.info("Initiating Grammy Awards extraction from operational relational database.")
     engine = create_engine(db_url)
 
     query = """
@@ -66,11 +66,11 @@ def extract_grammys(db_url: str, output_path: str) -> str:
         df_grammys = pd.read_sql(query, conn)
 
     total_rows = len(df_grammys)
-    logger.info(f"Grammy Awards extraídos de PostgreSQL con éxito: {total_rows:,} registros.")
+    logger.info(f"Grammy Awards successfully extracted from PostgreSQL: {total_rows:,} records.")
 
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     df_grammys.to_parquet(output_path, index=False)
-    logger.info(f"Dataset crudo de Grammys guardado en staging: {output_path}")
+    logger.info(f"Raw Grammy dataset persisted to staging: {output_path}")
 
     return output_path
 
@@ -87,4 +87,4 @@ if __name__ == "__main__":
 
     out_s = extract_spotify("spotify_dataset.csv", "data/staging/spotify_raw.parquet")
     out_g = extract_grammys(db_url, "data/staging/grammys_raw.parquet")
-    print(f"Archivos de staging generados:\n- {out_s}\n- {out_g}")
+    print(f"Staging artifacts generated:\n- {out_s}\n- {out_g}")

@@ -1,12 +1,12 @@
 -- ==============================================================
--- DDL de Configuración de Fuente Operacional: Grammy Awards
--- Base de Datos: source_music_db (o esquema de origen)
+-- Operational Source DDL: Grammy Awards
+-- Target Database: source_music_db (or designated operational source)
 -- ==============================================================
 
--- Eliminar tabla previa si existe para garantizar idempotencia en setup
+-- Drop existing table if present for idempotent source initialization
 DROP TABLE IF EXISTS grammy_awards CASCADE;
 
--- Crear tabla operacional para alojar los datos de Grammy Awards
+-- Create operational source table hosting historical Grammy Awards records
 CREATE TABLE grammy_awards (
     id SERIAL PRIMARY KEY,
     year INTEGER NOT NULL,
@@ -22,12 +22,12 @@ CREATE TABLE grammy_awards (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Índices estratégicos para optimizar la extracción del pipeline
+-- Strategic indexes optimizing operational extraction queries
 CREATE INDEX idx_grammy_year ON grammy_awards(year);
 CREATE INDEX idx_grammy_category ON grammy_awards(category);
 CREATE INDEX idx_grammy_artist ON grammy_awards(artist);
 CREATE INDEX idx_grammy_winner ON grammy_awards(winner);
 
--- Comentarios explicativos de ingeniería
-COMMENT ON TABLE grammy_awards IS 'Tabla operacional fuente de los premios Grammy, poblada inicialmente desde the_grammy_awards.csv para simular el origen relacional del pipeline.';
-COMMENT ON COLUMN grammy_awards.winner IS 'Indica si el nominado ganó el premio en su respectiva categoría.';
+-- Engineering comments
+COMMENT ON TABLE grammy_awards IS 'Operational source table for Grammy Awards, populated initially from the_grammy_awards.csv to establish a real relational extraction origin.';
+COMMENT ON COLUMN grammy_awards.winner IS 'Boolean flag indicating whether the nominee was declared winner in the respective category.';

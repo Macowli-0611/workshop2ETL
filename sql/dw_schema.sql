@@ -1,9 +1,9 @@
 -- ==============================================================
--- DDL del Data Warehouse Dimensional: dw_music_analytics
--- Modelo en Estrella (Star Schema) para Workshop-2 ETL
+-- Analytical Data Warehouse DDL: dw_music_analytics
+-- Dimensional Star Schema for Workshop-2 ETL
 -- ==============================================================
 
--- Esquema dimensional limpio
+-- Drop existing tables to ensure clean rebuild when executing migration
 DROP TABLE IF EXISTS fact_music_performance CASCADE;
 DROP TABLE IF EXISTS dim_track CASCADE;
 DROP TABLE IF EXISTS dim_artist CASCADE;
@@ -50,7 +50,7 @@ CREATE TABLE dim_genre (
 -- 4. DIMENSION: dim_time
 -- --------------------------------------------------------------
 CREATE TABLE dim_time (
-    time_sk INTEGER PRIMARY KEY, -- Formato numérico YYYY
+    time_sk INTEGER PRIMARY KEY, -- Numeric YYYY format
     year INTEGER NOT NULL,
     decade VARCHAR(20) NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -67,30 +67,30 @@ CREATE TABLE dim_grammy_category (
     CONSTRAINT uq_dim_category_name UNIQUE (category_name)
 );
 
--- Inserción de registro por defecto (SK = 0) para pistas sin premio/categoría
+-- Seed default records (SK = 0) for non-awarded tracks and unmapped years
 INSERT INTO dim_grammy_category (category_sk, category_name, category_field)
-VALUES (0, 'Sin Nominación / No Aplica', 'N/A')
+VALUES (0, 'No Nomination / Not Applicable', 'N/A')
 ON CONFLICT (category_sk) DO NOTHING;
 
 INSERT INTO dim_time (time_sk, year, decade)
-VALUES (0, 0, 'Desconocida')
+VALUES (0, 0, 'Unknown')
 ON CONFLICT (time_sk) DO NOTHING;
 
 -- --------------------------------------------------------------
--- 6. TABLA DE HECHOS: fact_music_performance
--- Grano: Una fila por pista musical (track), género de catálogo y evento de premiación.
+-- 6. FACT TABLE: fact_music_performance
+-- Grain: One row per audio track, catalog genre, and award event edition.
 -- --------------------------------------------------------------
 CREATE TABLE fact_music_performance (
     fact_id BIGSERIAL PRIMARY KEY,
     
-    -- Claves Foráneas a Dimensiones
+    -- Foreign Keys to Dimension Tables
     track_sk INTEGER NOT NULL REFERENCES dim_track(track_sk) ON DELETE CASCADE,
     artist_sk INTEGER NOT NULL REFERENCES dim_artist(artist_sk) ON DELETE CASCADE,
     genre_sk INTEGER NOT NULL REFERENCES dim_genre(genre_sk) ON DELETE CASCADE,
     time_sk INTEGER NOT NULL REFERENCES dim_time(time_sk) ON DELETE CASCADE,
     category_sk INTEGER NOT NULL REFERENCES dim_grammy_category(category_sk) ON DELETE CASCADE,
 
-    -- Medidas Numéricas y Métricas de Audio
+    -- Numerical Audio Signals & Consumptions Measures
     popularity INTEGER NOT NULL,
     danceability NUMERIC(6,4) NOT NULL,
     energy NUMERIC(6,4) NOT NULL,
@@ -99,20 +99,20 @@ CREATE TABLE fact_music_performance (
     loudness NUMERIC(7,3) NOT NULL,
     tempo NUMERIC(7,3) NOT NULL,
     
-    -- Medidas de Galardón y Aclamación
+    -- Award & Recognition Measures
     is_grammy_winner BOOLEAN NOT NULL DEFAULT FALSE,
     is_grammy_nominee BOOLEAN NOT NULL DEFAULT FALSE,
     award_count INTEGER NOT NULL DEFAULT 0,
 
-    -- Metadatos de Auditoría e Idempotencia
+    -- Audit Metadata & Safe Rerun Management
     batch_id VARCHAR(100) NOT NULL,
     loaded_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 
-    -- Restricción de unicidad para garantizar Safe Rerun (Idempotencia)
+    -- Composite unique grain constraint enforcing Safe Rerun Idempotency
     CONSTRAINT uq_fact_grain UNIQUE (track_sk, genre_sk, time_sk, category_sk)
 );
 
--- Índices de alto rendimiento para consultas analíticas de BI
+-- High-performance analytical indexes for BI reporting
 CREATE INDEX idx_fact_track ON fact_music_performance(track_sk);
 CREATE INDEX idx_fact_artist ON fact_music_performance(artist_sk);
 CREATE INDEX idx_fact_genre ON fact_music_performance(genre_sk);
@@ -121,6 +121,6 @@ CREATE INDEX idx_fact_category ON fact_music_performance(category_sk);
 CREATE INDEX idx_fact_winner ON fact_music_performance(is_grammy_winner);
 CREATE INDEX idx_fact_popularity ON fact_music_performance(popularity);
 
--- Comentarios explicativos de ingeniería
-COMMENT ON TABLE fact_music_performance IS 'Tabla de hechos central que correlaciona el consumo y atributos acústicos de Spotify con el estatus histórico de premios Grammy.';
-COMMENT ON CONSTRAINT uq_fact_grain ON fact_music_performance IS 'Clave natural compuesta del grano que previene duplicados en ejecuciones repetidas (Safe Rerun).';
+-- Engineering comments
+COMMENT ON TABLE fact_music_performance IS 'Central fact table evaluating Spotify digital consumption & audio features against historical Grammy Awards acclaim.';
+COMMENT ON CONSTRAINT uq_fact_grain ON fact_music_performance IS 'Composite natural grain constraint preventing duplicate rows during pipeline reruns (Safe Rerun pattern).';

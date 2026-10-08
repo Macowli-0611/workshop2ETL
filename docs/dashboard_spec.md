@@ -1,40 +1,41 @@
-# Especificación de Analítica y Dashboard de BI (Sección 8.1)
+# Analytics & BI Dashboard Specification (Section 8.1)
 **Workshop-2: Building a Reliable Batch Data Pipeline**
-*Curso: ETL (G01) — Universidad Autónoma de Occidente*
+*Course: ETL (G01) — Faculty of Engineering and Basic Sciences (UAO)*
 
 ---
 
-## 1. Conexión de BI al Data Warehouse
-> **Principio de Evaluación:** *"Direct CSV connections are not accepted as the assessed dashboard solution. The dashboard should answer the analytical requirements using trusted data from the Data Warehouse."*
+## 1. BI Connection to the Data Warehouse
+> **Evaluation Constraint:** *"Direct CSV connections are not accepted as the assessed dashboard solution. The dashboard should answer the analytical requirements using trusted data from the Data Warehouse."*
 
-### Parámetros de Conexión (Power BI / Tableau / Looker Studio):
-* **Motor:** PostgreSQL Database
-* **Servidor (Host):** `localhost` (o IP del host si corre en contenedor remoto)
-* **Puerto:** `5432`
-* **Base de Datos:** `dw_music_analytics`
-* **Modo de Acceso:** DirectQuery o Import
-* **Tablas a Importar / Consultar:**
-  * `fact_music_performance` (Tabla de Hechos)
-  * `dim_artist`, `dim_track`, `dim_genre`, `dim_time`, `dim_grammy_category` (Dimensiones)
+### Connection Parameters (Power BI / Tableau / Looker Studio):
+* **Database Engine:** PostgreSQL Database
+* **Server (Host):** `localhost` (or host IP if connecting from remote desktop client)
+* **Port:** `5432`
+* **Database Name:** `dw_music_analytics`
+* **Authentication:** User: `postgres`, Password: `postgres_secure_password`
+* **Import Mode:** DirectQuery or Import
+* **Target Schema Tables:**
+  * `fact_music_performance` (Fact Table)
+  * `dim_artist`, `dim_track`, `dim_genre`, `dim_time`, `dim_grammy_category` (Dimension Tables)
 
 ---
 
-## 2. Matriz de KPIs y Visualizaciones Implementadas
+## 2. Implemented KPIs & Visualizations Matrix
 
-| ID KPI | Requisito Analítico | Elemento del DW / Consulta SQL | Tipo de Visualización | Insight Principal Revelado |
+| KPI ID | Analytical Requirement | DW Element / SQL Query Logic | Visualization Type | Key Empirical Insight |
 | :--- | :--- | :--- | :--- | :--- |
-| **KPI-01** | **RQ-01:** Perfil Acústico de Canciones Premiadas vs. No Premiadas | `fact_music_performance` agrupado por `is_grammy_winner` promediando `danceability`, `energy`, `valence`, `acousticness`. | **Gráfico de Barras Agrupadas / Perfil Radar** (`kpi1_audio_profile.png`) | Las canciones ganadoras de Grammy presentan significativamente mayor **Valence** (0.53 vs 0.47) y **Energy** (0.67 vs 0.64), y menor **Acousticness** (0.24 vs 0.31), denotando una preferencia por producciones de alta energía y tono positivo. |
-| **KPI-02** | **RQ-02:** Impacto del Galardón en la Popularidad por Género | Join de `fact_music_performance` y `dim_genre`, comparando `popularity` promedio entre ganadores y catálogo general. | **Gráfico de Barras Doble con Delta de Popularidad** (`kpi2_genre_popularity.png`) | Los géneros tradicionales como **Soul** (+45.6 pts) y **Country** (+23.6 pts) experimentan el mayor multiplicador de popularidad digital tras el reconocimiento de la Recording Academy. |
-| **KPI-03** | **RQ-03:** Evolución Temporal de Colaboraciones y Contenido Explícito | Join de `fact_music_performance`, `dim_time`, `dim_track` y `dim_artist`, calculando tasas porcentuales por década. | **Gráfico de Líneas Multi-Serie Temporal** (`kpi3_temporal_trends.png`) | Entre los 1950s y 1980s el contenido explícito premiado fue del 0.0%. A partir de los 2000s sube al 10.16% y en los 2010s alcanza el **15.27%**, coincidiendo con una explosión de colaboraciones (**44.27%** de ganadores con múltiples artistas). |
+| **KPI-01** | **RQ-01:** Acoustic Profile of Awarded vs. Non-Awarded Tracks | Grouped by `is_grammy_winner` averaging `danceability`, `energy`, `valence`, `acousticness`. | **Grouped Bar Chart / Audio Radar** (`kpi1_audio_profile.png`) | Grammy winners exhibit significantly higher **Valence** (0.53 vs 0.47) and **Energy** (0.67 vs 0.64), and lower **Acousticness** (0.24 vs 0.31), reflecting an Academy bias toward high-energy, positive sound textures. Average popularity is **42.88** vs **33.28** (+9.6 points). |
+| **KPI-02** | **RQ-02:** Popularity Multiplier by Musical Genre | Inner Join between `fact_music_performance` and `dim_genre`, comparing average `popularity` between winners and general catalog. | **Comparative Genre Bar Chart with Uplift Delta** (`kpi2_genre_popularity.png`) | Traditional, vocal-heavy genres like **Soul** (+45.60 pts) and **Country** (+23.62 pts) experience the largest digital streaming popularity multiplier following Grammy acclaim. |
+| **KPI-03** | **RQ-03:** Historical Evolution of Collaborations & Explicit Content | Join between `fact_music_performance`, `dim_time`, `dim_track`, and `dim_artist`, computing percentage shares across decades. | **Multi-Series Historical Line Trend Chart** (`kpi3_temporal_trends.png`) | Between the 1950s and 1980s, awarded songs featured 0.0% explicit content. By the 2000s this reached 10.16% and peaked in the 2010s at **15.27%**, accompanied by a dramatic surge in collaborations (**44.27%** of awarded tracks). |
 
 ---
 
-## 3. Guía de Reproducción del Dashboard
-Para regenerar automáticamente los gráficos de evidencia técnica desde el Data Warehouse:
+## 3. Automated Replication
+To regenerate all three high-resolution figures directly from PostgreSQL:
 ```bash
 python3 scripts/generate_kpi_charts.py
 ```
-Las imágenes generadas de alta resolución se almacenan en:
+Generated artifacts are preserved in:
 * `docs/evidence/kpi1_audio_profile.png`
 * `docs/evidence/kpi2_genre_popularity.png`
 * `docs/evidence/kpi3_temporal_trends.png`

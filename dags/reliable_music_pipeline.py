@@ -1,29 +1,29 @@
 """
-DAG Principal: dags/reliable_music_pipeline.py
-==============================================
-Orquestación del Batch Pipeline de Integración Spotify + Grammys.
-Implementado para Apache Airflow 3.1.8 utilizando la TaskFlow API oficial (airflow.sdk).
+Main Orchestration DAG: dags/reliable_music_pipeline.py
+======================================================
+Batch Pipeline Orchestration integrating Spotify + Grammy Awards datasets.
+Authored for Apache Airflow 3.1.8 using the official TaskFlow API (airflow.sdk).
 
-Arquitectura del Flujo:
+Solution Architecture:
   extract_spotify ──► validate_spotify_raw ──┐
                                              ├──► transform_and_integrate ──► validate_prepared ──► load_dw
   extract_grammys ──► validate_grammys_raw ──┘
 
-Políticas de Confiabilidad:
-- XCom Transport: Solo se transmiten rutas de almacenamiento o metadatos compactos.
-- Reintentos Selectivos:
-  * Fallas operacionales transitorias (I/O, DB): reintentos acotados (retries=2, retry_delay=10s).
-  * Fallas de calidad de datos determinísticas (GX): sin reintentos (retries=0) para detener el pipeline de inmediato.
+Reliability Engineering Principles:
+- XCom Transport: Only compact file path references and audit metadata dictionaries are communicated.
+- Selective Retry Policies:
+  * Transient operational disruptions (I/O, DB socket): Bounded retries with backoff (retries=2, retry_delay=10s).
+  * Deterministic data quality violations (GX): Zero retries (retries=0) to stop pipeline immediately and surface evidence.
 """
 
 import os
 import sys
 from datetime import datetime, timedelta
 
-# Importación obligatoria según Sección 1 y 5 del Brief del Taller
+# Mandatory import according to Section 1 & Section 5 of the Workshop Brief
 from airflow.sdk import dag, task
 
-# Asegurar visibilidad del paquete src en PYTHONPATH
+# Ensure package visibility for src module within Airflow environment
 sys.path.append("/opt/airflow")
 
 DEFAULT_ARGS = {
@@ -36,8 +36,8 @@ DEFAULT_ARGS = {
 @dag(
     dag_id="reliable_music_pipeline",
     default_args=DEFAULT_ARGS,
-    description="Pipeline batch confiable de integración Spotify + Grammys hacia Data Warehouse dimensional",
-    schedule=None,  # Disparo manual o por evento
+    description="Reliable batch pipeline integrating Spotify + Grammys into dimensional Data Warehouse",
+    schedule=None,  # Manual trigger / Event-driven batch
     start_date=datetime(2026, 1, 1),
     catchup=False,
     tags=["etl", "spotify", "grammys", "great_expectations", "dw"],
@@ -45,7 +45,7 @@ DEFAULT_ARGS = {
 def reliable_music_pipeline():
 
     # ------------------------------------------------------------------
-    # RAMA SPOTIFY
+    # SPOTIFY EXTRACTION & RAW VALIDATION BRANCH
     # ------------------------------------------------------------------
     @task(
         task_id="extract_spotify",
@@ -53,7 +53,7 @@ def reliable_music_pipeline():
         retry_delay=timedelta(seconds=10),
     )
     def extract_spotify_task() -> str:
-        """Extrae el catálogo de Spotify desde CSV a almacenamiento staging."""
+        """Extracts raw Spotify catalog from CSV to persistent staging Parquet."""
         from src.extract import extract_spotify
         csv_path = os.getenv("SPOTIFY_CSV_PATH", "/opt/airflow/data/spotify_dataset.csv")
         output_path = "/opt/airflow/data/staging/spotify_raw.parquet"
@@ -61,17 +61,17 @@ def reliable_music_pipeline():
 
     @task(
         task_id="validate_spotify_raw",
-        retries=0,  # Falla determinística de calidad: sin reintento ciego
+        retries=0,  # Deterministic quality gate: no blind retries
     )
     def validate_spotify_raw_task(raw_path: str) -> dict:
-        """Compuerta Raw Spotify: valida DQ-RAW-SPT-01 a DQ-RAW-SPT-04."""
+        """Raw Validation Gate: Evaluates DQ-RAW-SPT-01 through DQ-RAW-SPT-04."""
         from src.validation import validate_spotify_raw
         report_path = "/opt/airflow/gx/results/spotify_raw_validation.json"
         res = validate_spotify_raw(raw_path, report_path)
         return {"dataset": "spotify_raw", "success": res["success"], "path": raw_path}
 
     # ------------------------------------------------------------------
-    # RAMA GRAMMY AWARDS (Base de Datos Operacional)
+    # GRAMMY AWARDS EXTRACTION & RAW VALIDATION BRANCH (Relational Source)
     # ------------------------------------------------------------------
     @task(
         task_id="extract_grammys",
@@ -79,7 +79,7 @@ def reliable_music_pipeline():
         retry_delay=timedelta(seconds=10),
     )
     def extract_grammys_task() -> str:
-        """Extrae Grammys desde la base relacional PostgreSQL (Sección 4.3)."""
+        """Extracts Grammys from relational PostgreSQL database (Section 4.3)."""
         from src.extract import extract_grammys
         user = os.getenv("POSTGRES_USER", "postgres")
         pwd = os.getenv("POSTGRES_PASSWORD", "postgres_secure_password")
@@ -92,24 +92,24 @@ def reliable_music_pipeline():
 
     @task(
         task_id="validate_grammys_raw",
-        retries=0,  # Falla determinística de calidad: sin reintento ciego
+        retries=0,  # Deterministic quality gate: no blind retries
     )
     def validate_grammys_raw_task(raw_path: str) -> dict:
-        """Compuerta Raw Grammys: valida DQ-RAW-GRM-01 y DQ-RAW-GRM-02."""
+        """Raw Validation Gate: Evaluates DQ-RAW-GRM-01 and DQ-RAW-GRM-02."""
         from src.validation import validate_grammys_raw
         report_path = "/opt/airflow/gx/results/grammys_raw_validation.json"
         res = validate_grammys_raw(raw_path, report_path)
         return {"dataset": "grammys_raw", "success": res["success"], "path": raw_path}
 
     # ------------------------------------------------------------------
-    # CONVERGENCIA: TRANSFORMACIÓN E INTEGRACIÓN
+    # CONVERGENCE: TRANSFORMATION & CROSS-SOURCE INTEGRATION
     # ------------------------------------------------------------------
     @task(
         task_id="transform_and_integrate",
-        retries=0,  # Reglas de negocio determinísticas
+        retries=0,  # Deterministic transformation logic
     )
     def transform_and_integrate_task(spotify_val: dict, grammys_val: dict) -> str:
-        """Aplica limpieza justificada, armonización y contrato de integración."""
+        """Applies justified cleaning, harmonization, and integration contract."""
         from src.transform import transform_and_integrate
         spotify_path = spotify_val["path"]
         grammys_path = grammys_val["path"]
@@ -117,21 +117,21 @@ def reliable_music_pipeline():
         return transform_and_integrate(spotify_path, grammys_path, output_path)
 
     # ------------------------------------------------------------------
-    # COMPUERTA PREPARED DATA
+    # PREPARED DATA VALIDATION GATE
     # ------------------------------------------------------------------
     @task(
         task_id="validate_prepared",
-        retries=0,  # Falla crítica previa al DW
+        retries=0,  # Deterministic pre-load quality gate
     )
     def validate_prepared_task(prep_path: str) -> dict:
-        """Compuerta Prepared: verifica aptitud para carga dimensional (DQ-PREP-INT)."""
+        """Prepared Gate: Verifies dimensional load readiness (DQ-PREP-INT)."""
         from src.validation import validate_prepared
         report_path = "/opt/airflow/gx/results/prepared_validation.json"
         res = validate_prepared(prep_path, report_path)
         return {"dataset": "prepared_music", "success": res["success"], "path": prep_path}
 
     # ------------------------------------------------------------------
-    # CARGA DIMENSIONAL AL DATA WAREHOUSE (IDEMPOTENTE)
+    # DIMENSIONAL LOAD TO DATA WAREHOUSE (IDEMPOTENT SAFE RERUN)
     # ------------------------------------------------------------------
     @task(
         task_id="load_dw",
@@ -139,7 +139,7 @@ def reliable_music_pipeline():
         retry_delay=timedelta(seconds=10),
     )
     def load_dw_task(prep_val: dict) -> dict:
-        """Carga en PostgreSQL dw_music_analytics garantizando Safe Rerun."""
+        """Populates dw_music_analytics enforcing Safe Rerun idempotency."""
         from src.load import load_data_warehouse
         prep_path = prep_val["path"]
         user = os.getenv("POSTGRES_USER", "postgres")
@@ -153,7 +153,7 @@ def reliable_music_pipeline():
         return load_data_warehouse(prep_path, dw_url, batch_id=batch_id)
 
     # ------------------------------------------------------------------
-    # DEFINICIÓN DEL FLUJO DE DEPENDENCIAS
+    # DEPENDENCY ORCHESTRATION GRAPH
     # ------------------------------------------------------------------
     s_raw_path = extract_spotify_task()
     s_val = validate_spotify_raw_task(s_raw_path)
@@ -161,13 +161,13 @@ def reliable_music_pipeline():
     g_raw_path = extract_grammys_task()
     g_val = validate_grammys_raw_task(g_raw_path)
 
-    # Ambas ramas convergen en la transformación
+    # Both raw branches converge into transformation
     prep_path = transform_and_integrate_task(s_val, g_val)
 
-    # Validación antes de carga
+    # Pre-load validation gate
     prep_val = validate_prepared_task(prep_path)
 
-    # Carga dimensional final
+    # Dimensional warehouse load
     load_dw_task(prep_val)
 
 pipeline = reliable_music_pipeline()
