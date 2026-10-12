@@ -1,6 +1,9 @@
 # Workshop-2 · Building a Reliable Batch Data Pipeline
 
+**Author:** Michael Macowli Cardona Rodriguez
 **Course:** ETL (G01) · Data Engineering and Artificial Intelligence · Faculty of Engineering and Basic Sciences · 2026-2
+
+**Start here:** [`QUICKSTART.md`](QUICKSTART.md) (step-by-step setup, demo and defense checklist) · [`docs/project_context.md`](docs/project_context.md) (what was built and why) · [Live dashboard](https://lookerstudio.google.com/reporting/c356ff56-e259-40bf-86e3-083f3924a837)
 
 A reliable batch pipeline that integrates the **Spotify catalog (CSV)** with the **Grammy Awards (PostgreSQL source database)**. It validates data with **Great Expectations** at raw and prepared gates, is orchestrated by **Apache Airflow 3.1.8** (TaskFlow API), loads a **star-schema Data Warehouse** in PostgreSQL and feeds a **BI dashboard** with three KPIs.
 
