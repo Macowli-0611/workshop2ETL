@@ -210,4 +210,4 @@ data/                             original input files (unchanged)
 
 ### Defense deck
 
-[`docs/presentation.html`](docs/presentation.html) is a single-file deck with 20 slides, organized by rubric criterion, with embedded evidence screenshots. Keys: ← → to navigate, **N** for speaker notes, **G** for overview, **F** for fullscreen; click a screenshot to zoom. A PDF export is in [`docs/presentation.pdf`](docs/presentation.pdf). To rebuild it after new evidence: `python3 scripts/build_presentation.py` (content in `scripts/presentation_template.html`).
+[`docs/presentation.html`](docs/presentation.html) is a single-file deck with 19 concise, visual slides (one message per slide) and embedded evidence screenshots; speaker notes carry the detail. Keys: ← → to navigate, **N** for speaker notes, **G** for overview, **F** for fullscreen; click a screenshot to zoom. A PDF export is in [`docs/presentation.pdf`](docs/presentation.pdf). To rebuild it after new evidence: `python3 scripts/build_presentation.py` (content in `scripts/presentation_template.html`).
