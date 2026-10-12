@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workshop-2 Defense Deck</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #f3efe6;
+  --paper-2: #ebe5d8;
+  --card: #fbf9f4;
+  --ink: #15171b;
+  --ink-2: #3d4149;
+  --muted: #6b6f78;
+  --rule: #d6cfbf;
+  --grid: rgba(21, 23, 27, 0.045);
+  --ok: #1d7a4c;
+  --ok-bg: #dcefe3;
+  --fail: #c0392b;
+  --fail-bg: #f6dcd8;
+  --warn: #a8670b;
+  --warn-bg: #f5e7cc;
+  --info: #2a5db0;
+  --info-bg: #dde7f6;
+  --accent: #d9480f;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+  --sans: "Archivo", "Helvetica Neue", sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: #22252b; color: var(--ink); font-family: var(--sans); overflow: hidden; }
+
+/* ---------- stage: fixed 1600x900 canvas scaled to the window ---------- */
+#viewport { position: fixed; inset: 0; overflow: hidden; }
+#stage { width: 1600px; height: 900px; position: absolute; left: 50%; top: 50%; transform-origin: center center; transform: translate(-50%, -50%); }
+.slide {
+  position: absolute; inset: 0; padding: 92px 72px 64px;
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 40px 40px;
+  display: none; flex-direction: column; overflow: hidden;
+}
+.slide.active { display: flex; }
+.slide.active > .body > * { animation: rise .45s cubic-bezier(.2,.7,.2,1) both; }
+.slide.active > .body > *:nth-child(2) { animation-delay: .06s; }
+.slide.active > .body > *:nth-child(3) { animation-delay: .12s; }
+.slide.active > .body > *:nth-child(4) { animation-delay: .18s; }
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .slide.active > .body > * { animation: none; } }
+
+/* ---------- chrome: pipeline rail + rubric tag + footer ---------- */
+.rail { position: absolute; top: 28px; left: 72px; right: 72px; display: flex; align-items: center; gap: 0; font: 600 12px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+.rail span { padding: 7px 10px; color: var(--muted); border: 1px solid var(--rule); background: var(--card); }
+.rail span + span { border-left: none; }
+.rail span.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.rail span.gate.on { background: var(--accent); border-color: var(--accent); }
+.rail .sep { flex: 1; }
+.rubric { font: 600 12px/1 var(--mono); padding: 7px 10px; border: 1.5px solid var(--ink); background: var(--paper); color: var(--ink); letter-spacing: .02em; text-transform: none; }
+.rubric b { color: var(--accent); }
+.foot { position: absolute; left: 72px; right: 72px; bottom: 24px; display: flex; justify-content: space-between; font: 500 12px/1 var(--mono); color: var(--muted); border-top: 1px solid var(--rule); padding-top: 10px; }
+
+/* ---------- typography ---------- */
+.kicker { font: 700 13px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+h1 { font-weight: 850; font-stretch: 112%; font-size: 76px; line-height: .98; letter-spacing: -.02em; }
+h2 { font-weight: 800; font-stretch: 108%; font-size: 44px; line-height: 1.05; letter-spacing: -.015em; margin-bottom: 6px; }
+.lede { font-size: 21px; line-height: 1.4; color: var(--ink-2); max-width: 1180px; }
+h3 { font-weight: 750; font-stretch: 100%; font-size: 19px; line-height: 1.2; margin-bottom: 8px; }
+p, li { font-size: 17px; line-height: 1.45; color: var(--ink-2); }
+ul { padding-left: 20px; }
+li + li { margin-top: 5px; }
+code, .mono { font-family: var(--mono); font-size: .86em; }
+code { background: var(--paper-2); padding: 1px 5px; border-radius: 3px; color: var(--ink); }
+strong { color: var(--ink); }
+.body { flex: 1; display: flex; flex-direction: column; gap: 22px; min-height: 0; }
+.head { display: flex; flex-direction: column; gap: 6px; }
+
+/* ---------- layout helpers ---------- */
+.row { display: flex; gap: 24px; min-height: 0; }
+.col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.grow { flex: 1; }
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.g3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.g4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.card { background: var(--card); border: 1px solid var(--rule); padding: 18px 20px; }
+.card.ink { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.card.ink p, .card.ink li, .card.ink h3, .card.ink strong { color: var(--paper); }
+.card.ok { border-left: 5px solid var(--ok); }
+.card.fail { border-left: 5px solid var(--fail); }
+.card.warn { border-left: 5px solid var(--warn); }
+.card.info { border-left: 5px solid var(--info); }
+
+/* big numbers */
+.stat .n { font: 700 46px/1 var(--mono); letter-spacing: -.03em; color: var(--ink); }
+.stat .n small { font-size: 22px; color: var(--muted); }
+.stat .l { margin-top: 8px; font-size: 15px; line-height: 1.35; color: var(--ink-2); }
+.n.ok { color: var(--ok); } .n.fail { color: var(--fail); } .n.acc { color: var(--accent); }
+
+/* tables */
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
+th { text-align: left; font: 700 11.5px/1.2 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 8px 10px; border-bottom: 2px solid var(--ink); }
+td { padding: 8px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; color: var(--ink-2); line-height: 1.35; }
+td.num, th.num { text-align: right; font-family: var(--mono); }
+tr:last-child td { border-bottom: none; }
+
+/* pills */
+.pill { display: inline-block; font: 700 11px/1 var(--mono); letter-spacing: .05em; padding: 4px 7px; border-radius: 2px; text-transform: uppercase; white-space: nowrap; }
+.pill.c { background: var(--fail-bg); color: var(--fail); }
+.pill.w { background: var(--warn-bg); color: var(--warn); }
+.pill.i { background: var(--info-bg); color: var(--info); }
+.pill.s { background: var(--ok-bg); color: var(--ok); }
+.pill.k { background: var(--ink); color: var(--paper); }
+
+/* code blocks */
+pre { font: 500 13.5px/1.55 var(--mono); background: var(--ink); color: #e8e4da; padding: 14px 16px; overflow: hidden; white-space: pre; }
+pre .k { color: #f59f6b; } pre .s { color: #9fd3a8; } pre .f { color: #ff8a7a; } pre .c { color: #8a8f99; }
+
+/* screenshots */
+.shot { position: relative; border: 1px solid var(--ink); background: #fff; box-shadow: 6px 6px 0 var(--ink); overflow: hidden; cursor: zoom-in; }
+.shot img { display: block; width: 100%; height: 100%; object-fit: contain; object-position: center; background: #fff; }
+.shot figcaption { position: absolute; left: 0; bottom: 0; font: 600 11.5px/1 var(--mono); background: var(--ink); color: var(--paper); padding: 6px 9px; letter-spacing: .03em; }
+.shot.contain img { object-fit: contain; background: #fff; }
+.shot.natural { flex: none !important; height: auto !important; }
+.shot.natural img { height: auto; }
+
+/* pipeline diagram */
+.flow { display: grid; grid-template-columns: 190px 30px 185px 30px 205px 30px 250px 30px 190px 30px 186px; align-items: center; row-gap: 14px; }
+.node { border: 1.5px solid var(--ink); background: var(--card); padding: 10px 12px; font-size: 14px; line-height: 1.25; }
+.node b { display: block; font: 700 13.5px/1.2 var(--mono); color: var(--ink); margin-bottom: 3px; }
+.node.gate { border-color: var(--accent); background: #fbe9df; }
+.node.src { background: var(--paper-2); }
+.node.dw { background: var(--ink); color: var(--paper); }
+.node.dw b { color: var(--paper); }
+.arr { text-align: center; font: 700 20px/1 var(--mono); color: var(--ink); }
+.span2 { grid-row: span 2; align-self: stretch; display: flex; flex-direction: column; justify-content: center; }
+
+/* funnel */
+.funnel .stepf { display: grid; grid-template-columns: 200px 1fr 110px; align-items: center; gap: 14px; margin-bottom: 9px; }
+.funnel .bar { height: 30px; background: var(--ink); position: relative; }
+.funnel .bar.sub { background: var(--fail); }
+.funnel .bar.hit { background: var(--ok); }
+.funnel .lbl { font: 600 13.5px/1.2 var(--mono); color: var(--ink-2); }
+.funnel .val { font: 700 17px/1 var(--mono); text-align: right; }
+
+/* star schema */
+.star { position: relative; height: 470px; }
+.star .t { position: absolute; width: 250px; border: 1.5px solid var(--ink); background: var(--card); font-size: 13px; }
+.star .t header { background: var(--ink); color: var(--paper); font: 700 13px/1 var(--mono); padding: 8px 10px; }
+.star .t div { padding: 7px 10px; font-family: var(--mono); font-size: 12px; line-height: 1.5; color: var(--ink-2); }
+.star .t.fact { width: 300px; left: 50%; top: 50%; transform: translate(-50%, -50%); border-width: 2px; }
+.star .t.fact header { background: var(--accent); }
+.star svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+/* traceability chain */
+.chain { display: grid; grid-template-columns: 80px repeat(7, 1fr); gap: 0; align-items: stretch; }
+.chain > div { border: 1px solid var(--rule); border-left: none; background: var(--card); padding: 12px 12px; font-size: 15px; line-height: 1.32; color: var(--ink-2); }
+.chain > div:first-child { border-left: 1px solid var(--rule); }
+.chain .rq { background: var(--ink); color: var(--paper); font: 700 15px/1.2 var(--mono); display: flex; align-items: center; justify-content: center; border-color: var(--ink); }
+.chain.headrow > div { background: transparent; border: none; border-bottom: 2px solid var(--ink); font: 700 11px/1.2 var(--mono); letter-spacing: .07em; text-transform: uppercase; color: var(--muted); padding: 6px 11px; }
+
+/* title slide */
+.title-wrap { display: grid; grid-template-columns: 1.25fr .9fr; gap: 56px; flex: 1; align-items: center; }
+.title-wrap .stack { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 26px; }
+.big-quote { font-weight: 300; font-stretch: 90%; font-size: 26px; line-height: 1.3; color: var(--ink); border-left: 5px solid var(--accent); padding-left: 18px; margin-top: 30px; }
+
+/* qa */
+.qa { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 22px; }
+.qa div { border-top: 2px solid var(--ink); padding-top: 9px; }
+.qa h3 { font-size: 16.5px; margin-bottom: 5px; }
+.qa p { font-size: 14.5px; line-height: 1.4; }
+
+.notes { display: none; }
+
+/* ---------- presenter UI ---------- */
+#progress { position: fixed; left: 0; top: 0; height: 4px; background: var(--accent); transition: width .25s; z-index: 5; }
+#notes-panel { position: fixed; left: 0; right: 0; bottom: 0; max-height: 38vh; overflow: auto; background: #111317; color: #e9e5dc; border-top: 3px solid var(--accent); padding: 16px 28px 22px; font-size: 16px; line-height: 1.5; transform: translateY(105%); transition: transform .25s; z-index: 6; }
+#notes-panel.open { transform: none; }
+#notes-panel .meta { display: flex; gap: 24px; font: 600 13px/1 var(--mono); color: #a7abb4; margin-bottom: 10px; }
+#notes-panel .meta b { color: #fff; }
+#notes-panel p, #notes-panel li { color: #e9e5dc; font-size: 16px; }
+#notes-panel ul { margin-top: 6px; }
+#notes-panel .q { margin-top: 10px; padding: 8px 12px; border-left: 3px solid var(--accent); background: #1b1e24; }
+#help { transition: opacity .6s; position: fixed; right: 14px; bottom: 12px; font: 500 12px/1.3 var(--mono); color: #b8bcc5; background: rgba(17,19,23,.85); padding: 7px 10px; z-index: 4; }
+#overview { position: fixed; inset: 0; background: rgba(17,19,23,.96); z-index: 7; display: none; padding: 40px; overflow: auto; }
+#overview.open { display: block; }
+#overview ol { columns: 2; column-gap: 50px; max-width: 1200px; margin: 0 auto; list-style: none; counter-reset: s; }
+#overview li { counter-increment: s; break-inside: avoid; padding: 10px 0; border-bottom: 1px solid #2d3139; }
+#overview button { all: unset; cursor: pointer; color: #e9e5dc; font-size: 18px; }
+#overview button::before { content: counter(s, decimal-leading-zero) "  "; font-family: var(--mono); color: var(--accent); }
+#overview button:focus-visible, #overview button:hover { text-decoration: underline; }
+#lightbox { position: fixed; inset: 0; background: rgba(10,11,13,.94); z-index: 8; display: none; place-items: center; cursor: zoom-out; padding: 2vh 2vw; }
+#lightbox.open { display: grid; }
+#lightbox img { max-width: 96vw; max-height: 96vh; box-shadow: 0 0 0 1px #444; background: #fff; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+@media print {
+  @page { size: 1600px 900px; margin: 0; }
+  html, body { overflow: visible; background: #fff; height: auto; }
+  #viewport { position: static; display: block; }
+  #stage { position: static; transform: none !important; width: 1600px; height: auto; }
+  .slide:last-of-type { page-break-after: auto; break-after: auto; }
+  .slide { display: flex !important; position: relative; height: 900px; page-break-after: always; break-after: page; }
+  .slide > .body > * { animation: none !important; }
+  #progress, #notes-panel, #help, #overview, #lightbox, .sr, script { display: none !important; }
+  .slide { overflow: hidden; }
+  .slide:last-of-type { height: 899px; }
+}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div id="viewport"><main id="stage" aria-live="polite">
+
+<!-- ============================ 1 · TITLE ============================ -->
+<section class="slide" data-stage="all" data-rubric="Presentation &amp; defense · <b>1.00</b>" data-title="Title">
+  <div class="body">
+    <div class="title-wrap">
+      <div>
+        <div class="kicker">Workshop-2 · ETL G01 · Data Engineering &amp; AI · 2026-2</div>
+        <h1>A reliable batch pipeline for Spotify&nbsp;×&nbsp;Grammy data</h1>
+        <p class="lede" style="margin-top:22px">Two heterogeneous sources, two validation gates, one trusted star-schema Data Warehouse, and every failure anticipated, controlled and observable.</p>
+        <div class="stack">
+          <span class="pill k">Airflow 3.1.8 · airflow.sdk</span>
+          <span class="pill k">Great Expectations 1.x</span>
+          <span class="pill k">PostgreSQL 16</span>
+          <span class="pill k">Metabase</span>
+          <span class="pill k">Docker Compose</span>
+        </div>
+        <div class="big-quote">“A Data Engineer does not build scripts.<br>A Data Engineer designs systems.”</div>
+      </div>
+      <div class="g2">
+        <div class="card stat"><div class="n">2</div><div class="l">sources: Spotify <strong>CSV</strong> + Grammys from a <strong>PostgreSQL</strong> source DB</div></div>
+        <div class="card stat"><div class="n acc">18</div><div class="l">quality rules in <strong>3 GX gates</strong> (31 expectations)</div></div>
+        <div class="card stat"><div class="n">113,549</div><div class="l">fact rows loaded = prepared rows (full reconciliation)</div></div>
+        <div class="card stat"><div class="n ok">4/4</div><div class="l">reliability tests in Airflow: success · controlled failure · safe rerun · retry</div></div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><strong>Apertura (≈45 s).</strong> «Construimos un pipeline batch confiable que integra el catálogo de Spotify, que llega como CSV, con los premios Grammy, que extraemos de una base PostgreSQL de origen. El producto final es un Data Warehouse en estrella y un dashboard con tres KPIs.»</p>
+    <p>Mensaje central: no es un script, es un sistema. Las fallas están <em>anticipadas</em> (reglas con severidad), <em>controladas</em> (las compuertas bloquean la carga) y son <em>observables</em> (estados, logs y JSON por ejecución).</p>
+    <p>Recorre los cuatro números de la derecha: los vas a demostrar uno por uno.</p>
+  </aside>
+</section>
+
+<!-- ============================ 2 · REQUIREMENTS ============================ -->
+<section class="slide" data-stage="src" data-rubric="Analytical requirements &amp; architecture · <b>0.40</b>" data-title="Analytical requirements">
+  <div class="body">
+    <div class="head">
+      <div class="kicker">§6.1 · Start from the decision, not the data</div>
+      <h2>Three questions that neither source can answer alone</h2>
+    </div>
+    <table>
+      <thead><tr><th style="width:90px">ID</th><th>Analytical question → decision</th><th>From Spotify</th><th>From Grammys</th><th>KPI</th><th>Level of detail</th></tr></thead>
+      <tbody>
+        <tr><td><span class="pill k">RQ-01</span></td><td><strong>Do Grammy winners sound different and are they more popular?</strong><br>→ which sound profile to prioritise in award-oriented repertoire</td><td>danceability, energy, valence, acousticness, popularity</td><td>nominee, artist, winner</td><td>KPI-01 audio profile + popularity uplift</td><td>distinct track × award status</td></tr>
+        <tr><td><span class="pill k">RQ-02</span></td><td><strong>In which genres is a Grammy associated with the largest popularity uplift?</strong><br>→ where post-award promotion pays off</td><td>track_genre, popularity</td><td>nominee, artist, winner</td><td>KPI-02 uplift per genre (n ≥ 5)</td><td>track × genre</td></tr>
+        <tr><td><span class="pill k">RQ-03</span></td><td><strong>How did explicit content and collaborations evolve among awarded tracks?</strong><br>→ editorial and collaboration strategy</td><td>explicit, artists (credit list)</td><td>year, nominee, artist</td><td>KPI-03 % explicit / % collab per decade</td><td>awarded track × decade</td></tr>
+      </tbody>
+    </table>
+    <div class="g3">
+      <div class="card info"><h3>Why both sources</h3><p>Spotify has sound, popularity and genre but <strong>no recognition</strong>. The Grammys have recognition and year but <strong>no audio or consumption data</strong>. Every KPI combines one attribute from each source.</p></div>
+      <div class="card"><h3>Scope</h3><p>Batch, manually triggered; exact matching on a normalized key; association, not causation (popularity is one snapshot).</p></div>
+      <div class="card"><h3>Traceability IDs</h3><p><code>RQ-xx</code> → <code>DQ-*</code> rules → <code>TR-xx</code> transformations → DW views → <code>KPI-xx</code>, used consistently in code, docs and evidence.</p></div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>El PDF exige definir los requisitos <strong>antes</strong> del profiling y del modelado. Cada requisito determina datos, reglas, transformaciones y estructura dimensional.</p>
+    <p>Enfatiza la columna de las fuentes: ninguna fila se resuelve con una sola fuente, y eso justifica la integración.</p>
+    <div class="q"><strong>Si preguntan «¿por qué no hay nominados?»</strong>: el CSV de Grammys solo trae ganadores (4.810 de 4.810 con winner = True). Por eso comparamos ganadores contra catálogo y lo documentamos como limitación.</div>
+  </aside>
+</section>
+
+<!-- ============================ 3 · ARCHITECTURE ============================ -->
+<section class="slide" data-stage="all" data-rubric="Analytical requirements &amp; architecture · <b>0.40</b>" data-title="Architecture">
+  <div class="body">
+    <div class="head">
+      <div class="kicker">§5 · Required solution architecture, implemented as-is</div>
+      <h2>Two observable branches, two gates, one gated load</h2>
+    </div>
+    <div class="flow">
+      <div class="node src"><b>spotify_dataset.csv</b>file source</div><div class="arr">→</div>
+      <div class="node"><b>extract_spotify</b>raw → Parquet, no cleaning</div><div class="arr">→</div>
+      <div class="node gate"><b>validate_spotify_raw</b>GX · 9 expectations</div><div class="arr span2" style="font-size:26px">⇉</div>
+      <div class="node span2"><b>transform_and_integrate</b>TR-01…TR-12 + integration contract. Runs only if <strong>both</strong> raw gates pass</div><div class="arr span2">→</div>
+      <div class="node gate span2"><b>validate_prepared</b>GX · 18 expectations</div><div class="arr span2">→</div>
+      <div class="node dw span2"><b>load_dw</b>star schema · 1 transaction<br><br><b>→ Metabase</b>3 KPIs on DW views</div>
+      <div class="node src"><b>source_music_db</b>PostgreSQL · grammy_awards</div><div class="arr">→</div>
+      <div class="node"><b>extract_grammys</b>SQL query → Parquet</div><div class="arr">→</div>
+      <div class="node gate"><b>validate_grammys_raw</b>GX · 4 expectations</div>
+    </div>
+    <div class="row grow">
+      <div class="col" style="width:56%">
+        <div class="g2">
+          <div class="card"><h3>Orchestration</h3><ul><li><code>from airflow.sdk import dag, task</code> (TaskFlow)</li><li>default <code>all_success</code>: load waits for the prepared gate</li><li><code>max_active_runs=1</code>, <code>schedule=None</code></li></ul></div>
+          <div class="card"><h3>Interfaces</h3><ul><li>XCom carries <strong>paths + small dicts</strong>, never DataFrames</li><li>run-scoped staging <code>data/staging/&lt;run_id&gt;/</code></li><li>evidence <code>docs/evidence/runs/&lt;run_id&gt;/</code></li></ul></div>
+        </div>
+        <div class="card warn"><h3>Source preparation ≠ ETL load</h3><p>The <code>source-seed</code> service loads the provided Grammy CSV into PostgreSQL and reconciles it (<strong>4,810 = 4,810 rows</strong>). The DAG then extracts <em>only</em> from the database.</p></div>
+      </div>
+      <div class="col grow">
+        <figure class="shot" style="height:200px" data-full="%%FULL:a2%%"><img src="%%IMG:a2_crop%%" alt="Airflow graph view of the successful run, all seven tasks green"><figcaption>Airflow Graph · test_a_success</figcaption></figure>
+<pre class="grow"><span class="c"># dags/reliable_music_pipeline.py (dependencies)</span>
+<span class="k">from</span> airflow.sdk <span class="k">import</span> dag, task, get_current_context
+
+s_val = validate_spotify_raw_task(extract_spotify_task())
+g_val = validate_grammys_raw_task(extract_grammys_task())
+prep  = validate_prepared_task(
+          transform_and_integrate_task(s_val, g_val))
+load_dw_task(prep)</pre>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>Sigue el diagrama de izquierda a derecha. Las dos ramas son <strong>independientes y observables</strong>: cada una tiene su propia extracción y su propia compuerta.</p>
+    <p>La convergencia es el punto clave: con la regla por defecto <code>all_success</code>, la transformación no arranca si alguna compuerta raw falla, y <code>load_dw</code> no arranca si falla la compuerta de datos preparados.</p>
+    <p>La lógica vive en <code>src/</code>; el DAG solo describe el flujo. Por XCom solo viajan rutas y diccionarios pequeños.</p>
+    <div class="q"><strong>Evidencia §4.3</strong>: la carga de la fuente es preparación y no es el Load del ETL. El log de <code>extract_grammys</code> dice «extracted from PostgreSQL: 4,810 records».</div>
+  </aside>
+</section>
+
+<!-- ============================ 4 · PROFILING ============================ -->
+<section class="slide" data-stage="src" data-rubric="Data profiling &amp; quality risk analysis · <b>0.60</b>" data-title="Profiling → risks">
+  <div class="body">
+    <div class="head">
+      <div class="kicker">§6.3 · Evidence before rules · notebooks/data_profiling.ipynb (executed, outputs saved)</div>
+      <h2>What the data actually looks like, and why it matters</h2>
+    </div>
+    <div class="row grow">
+      <div class="g3" style="width:62%; align-content:start">
+        <div class="card fail stat"><div class="n">450</div><div class="l">duplicate <code>(track_id, track_genre)</code> rows (0.39%) → would double count genre KPIs → <strong>DQ-RAW-SPT-06 · TR-03</strong></div></div>
+        <div class="card fail stat"><div class="n">1</div><div class="l">corrupted row: 0&nbsp;ms duration, null title &amp; artist → <strong>DQ-RAW-SPT-02 · TR-01</strong></div></div>
+        <div class="card warn stat"><div class="n">6</div><div class="l">Grammy rows without <code>nominee</code> (0.12%) → cannot match → <strong>DQ-RAW-GRM-02 (Warning) · TR-06</strong></div></div>
+        <div class="card warn stat"><div class="n">38%</div><div class="l">1,840 awards without <code>artist</code> (craft, classical, album categories) → structural coverage limit</div></div>
+        <div class="card info stat"><div class="n">100%</div><div class="l">4,810 / 4,810 Grammy rows are winners → no nominee tier, so we compare winners vs catalog</div></div>
+        <div class="card info stat"><div class="n">161→181</div><div class="l">matched Grammy keys with raw text vs normalized key: <code>;</code> vs <code>feat.</code>/<code>&amp;</code> → <strong>TR-04/05</strong></div></div>
+        <div class="card" style="grid-column: span 3"><p><strong>Structure:</strong> Spotify 114,000 × 21, grain track × genre (89,741 distinct tracks). Grammys 4,810 × 10, years 1958–2019, key (year, category, nominee) 100% unique. Audio features within [0, 1], popularity within [0, 100].</p></div>
+      </div>
+      <div class="col grow">
+        <figure class="shot grow contain" data-full="%%FULL:prof1%%"><img src="%%IMG:prof_missing%%" alt="Notebook figure: percentage of missing values per Grammy column, artist about 38 percent"><figcaption>Notebook §8b · Grammy completeness</figcaption></figure>
+        <figure class="shot grow contain" data-full="%%FULL:prof1%%"><img src="%%IMG:prof_duration%%" alt="Notebook figure: Spotify duration histogram in minutes"><figcaption>Notebook §8b · Spotify duration distribution</figcaption></figure>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>El profiling solo describe; no modifica nada. Cada tarjeta es un hallazgo con su número, el riesgo que implica y la regla o transformación que lo atiende.</p>
+    <p>Rojo = riesgo que se limpia en la transformación. Ámbar = riesgo que se monitorea. Azul = limitación estructural que documentamos.</p>
+    <div class="q"><strong>Si preguntan «¿por qué la cobertura del cruce es baja?»</strong>: el 38% de los premios no tiene artista y muchas categorías no son canciones. Lo medimos en cada ejecución; no lo escondemos.</div>
+  </aside>
+</section>
+
+<!-- ============================ 5 · QUALITY RULES ============================ -->
+<section class="slide" data-stage="raw,prep" data-rubric="Profiling, risks, rules, metrics &amp; thresholds · <b>0.60</b>" data-title="Quality rules">
+  <div class="body">
+    <div class="head">
+      <div class="kicker">§6.5 · 18 rules · coverage follows risk, not symmetry</div>
+      <h2>Rules with a dimension, a threshold and a consequence</h2>
+    </div>
+    <div class="row grow">
+      <div class="col" style="width:66%">
+        <table>
+          <thead><tr><th>Rule</th><th>Layer</th><th>What must be true</th><th>Threshold</th><th>Severity</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">SPT-05 · GRM-03 · PREP-03</td><td>all gates</td><td>Schema contract (required / exact columns)</td><td>100%</td><td><span class="pill c">Critical</span></td></tr>
+            <tr><td class="mono">RAW-SPT-01</td><td>Spotify raw</td><td><code>track_id</code> not null</td><td>0 nulls</td><td><span class="pill c">Critical</span></td></tr>
+            <tr><td class="mono">RAW-SPT-02</td><td>Spotify raw</td><td>duration &gt; 1,000 ms</td><td>≥ 99.9%</td><td><span class="pill c">Critical</span></td></tr>
+            <tr><td class="mono">RAW-SPT-03 · 04</td><td>Spotify raw</td><td>4 audio features ∈ [0, 1]; popularity ∈ [0, 100]</td><td>100%</td><td><span class="pill c">Critical</span></td></tr>
+            <tr><td class="mono">RAW-SPT-06</td><td>Spotify raw</td><td>(track, genre) unique</td><td>≥ 99%</td><td><span class="pill w">Warning</span></td></tr>
+            <tr><td class="mono">RAW-GRM-01</td><td>Grammy raw</td><td>year ∈ [1958, 2026]</td><td>100%</td><td><span class="pill c">Critical</span></td></tr>
+            <tr><td class="mono">RAW-GRM-02 · 04</td><td>Grammy raw</td><td>nominee populated · row-count band 4k–10k</td><td>≥ 99.5% · band</td><td><span class="pill w">Warning</span> <span class="pill i">Info</span></td></tr>
+            <tr><td class="mono">PREP-02 · 04</td><td>prepared</td><td>keys not null; ranges hold after transform</td><td>100%</td><td><span class="pill c">Critical</span></td></tr>
+            <tr><td class="mono">PREP-05</td><td>prepared</td><td>fact grain unique</td><td>0 duplicates</td><td><span class="pill c">Critical</span></td></tr>
+            <tr><td class="mono">PREP-06 · 07</td><td>prepared</td><td>matched ⇒ valid year &amp; award_count ≥ 1; unmatched ⇒ year 0; both tiers exist</td><td>100%</td><td><span class="pill c">Critical</span></td></tr>
+            <tr><td class="mono">PREP-08 · 01</td><td>prepared</td><td>match rate plausible · flag is boolean</td><td>≤ 5% · set</td><td><span class="pill w">Warning</span> <span class="pill i">Info</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="col grow">
+        <div class="g3">
+          <div class="card stat"><div class="n fail">13</div><div class="l">Critical</div></div>
+          <div class="card stat"><div class="n" style="color:var(--warn)">3</div><div class="l">Warning</div></div>
+          <div class="card stat"><div class="n" style="color:var(--info)">2</div><div class="l">Informational</div></div>
+        </div>
+        <div class="card"><h3>Severity policy</h3>
+          <p><span class="pill c">Critical</span> → <code>CriticalDataQualityError</code>: task fails, downstream <code>upstream_failed</code>, DW untouched</p>
+          <p style="margin-top:8px"><span class="pill w">Warning</span> → logged + recorded, <code>CONTINUE_WITH_WARNING</code></p>
+          <p style="margin-top:8px"><span class="pill i">Info</span> → recorded as a trend signal, never blocks</p></div>
+        <div class="card"><h3>A threshold is a decision</h3><p>Duration ≥ 99.9%: one corrupted row is tolerated (TR-01 removes it), but a systemic unit change (&gt; 114 rows) stops the batch.</p></div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>Son 18 reglas, más del mínimo de 6. No buscamos simetría por dataset: la cobertura sigue los riesgos y los requisitos.</p>
+    <p>Explica una regla de cada severidad. La de duración muestra cómo se justifica un umbral: no lo elegimos para que pase el lote actual, sino para tolerar corrupción aislada y detener un error sistemático.</p>
+    <p>Las reglas del nivel preparado verifican invariantes posteriores a la transformación (rangos sin tolerancia, grano único) y la integridad de la integración.</p>
+    <div class="q"><strong>Trampa</strong>: «¿Modifican datos para que pase la validación?» No. La validación detecta; la transformación aplica reglas justificadas por sí mismas (TR-xx).</div>
+  </aside>
+</section>
+
+<!-- ============================ 6 · GX DESIGN ============================ -->
+<section class="slide" data-stage="raw,prep" data-rubric="Automated validation with Great Expectations · <b>0.80</b>" data-title="Great Expectations design">
+  <div class="body">
+    <div class="head">
+      <div class="kicker">§6.6 · src/validation.py · gx/expectations · gx/validation_definitions · gx/checkpoints</div>
+      <h2>Suite → Validation Definition → Checkpoint, for every rule</h2>
+    </div>
+    <div class="flow" style="grid-template-columns: 215px 34px 215px 34px 230px 34px 215px 34px 250px; row-gap:12px">
+      <div class="node src"><b>Batch Definition</b>staging Parquet of <em>this</em> run (pandas source → asset)</div><div class="arr">+</div>
+      <div class="node"><b>Expectation Suite</b>each expectation tagged <code>meta.rule_id</code> + <code>severity</code></div><div class="arr">=</div>
+      <div class="node"><b>Validation Definition</b>data ↔ suite association</div><div class="arr">→</div>
+      <div class="node gate"><b>Checkpoint</b>controlled execution, result_format SUMMARY</div><div class="arr">→</div>
+      <div class="node dw"><b>Severity policy</b>STOP · CONTINUE_WITH_WARNING · CONTINUE → <code>&lt;gate&gt;_validation.json</code></div>
+    </div>
+    <div class="row grow">
+      <div class="col" style="width:44%">
+        <table>
+          <thead><tr><th>Run</th><th>Gate</th><th class="num">Passed</th><th>Decision</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">test_a_success</td><td>spotify_raw_suite</td><td class="num">9 / 9</td><td><span class="pill s">Continue</span></td></tr>
+            <tr><td class="mono">test_a_success</td><td>grammys_raw_suite</td><td class="num">4 / 4</td><td><span class="pill s">Continue</span></td></tr>
+            <tr><td class="mono">test_a_success</td><td>prepared_music_suite</td><td class="num">18 / 18</td><td><span class="pill s">Continue</span></td></tr>
+            <tr><td class="mono">test_b_controlled…</td><td>grammys_raw_suite</td><td class="num">3 / 4</td><td><span class="pill c">Stop</span></td></tr>
+          </tbody>
+        </table>
+        <div class="card"><h3>Design choices</h3><ul><li>One generic <code>run_gate()</code>: same chain for the 3 gates</li><li>Ephemeral context per task: the two raw gates run in parallel with no shared-file race; config exported to <code>gx/</code></li><li>Results are per run and never overwritten, so success <em>and</em> failure evidence coexist</li></ul></div>
+      </div>
+      <div class="col grow">
+<pre><span class="c">// docs/evidence/runs/test_b_controlled_failure/grammys_raw_validation.json</span>
+{ <span class="k">"suite"</span>: <span class="s">"grammys_raw_suite"</span>,
+  <span class="k">"validation_definition"</span>: <span class="s">"grammys_raw_validation_definition"</span>,
+  <span class="k">"checkpoint"</span>: <span class="s">"grammys_raw_checkpoint"</span>,
+  <span class="k">"batch_context"</span>: { <span class="k">"run_id"</span>: <span class="s">"test_b_controlled_failure"</span>,
+                     <span class="k">"source"</span>: <span class="s">"source_music_db.grammy_awards"</span> },
+  <span class="k">"gate_decision"</span>: <span class="f">"STOP"</span>,
+  <span class="k">"summary"</span>: { <span class="k">"expectations_passed"</span>: 3, <span class="k">"critical_failures"</span>: [<span class="f">"DQ-RAW-GRM-01 (year)"</span>] },
+  <span class="k">"rules_evaluated"</span>: [ {
+      <span class="k">"rule_id"</span>: <span class="s">"DQ-RAW-GRM-01"</span>, <span class="k">"severity"</span>: <span class="s">"Critical"</span>,
+      <span class="k">"expectation_type"</span>: <span class="s">"expect_column_values_to_be_between"</span>,
+      <span class="k">"success"</span>: <span class="f">false</span>, <span class="k">"element_count"</span>: 4811,
+      <span class="k">"unexpected_count"</span>: <span class="f">1</span>, <span class="k">"partial_unexpected_list"</span>: [<span class="f">1800</span>] }, … ] }</pre>
+        <div class="card info"><p><strong>Mapping:</strong> every one of the 31 expectations → Rule ID in <code>docs/quality_rules.md §3.1</code>. Examples: <code>expect_compound_columns_to_be_unique</code> → PREP-05; <code>row_condition="is_grammy_winner==True"</code> → PREP-06.</p></div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>Este es el criterio de mayor peso individual después de Airflow (0,80). Explica la cadena completa, que el PDF pide poder explicar: qué dato se valida, qué suite aplica, cómo la Validation Definition los une y cómo el Checkpoint ejecuta y registra.</p>
+    <p>El resultado no es un booleano: es evidencia por regla, con conteo de inesperados y valores de ejemplo. Muestra el JSON de la prueba B: aparece el 1800 y la regla exacta.</p>
+    <div class="q"><strong>Si preguntan «¿por qué contexto efímero?»</strong>: las dos compuertas raw corren en paralelo. Un contexto de archivo compartido escribiría <code>great_expectations.yml</code> a la vez desde dos procesos. La configuración igual queda exportada en <code>gx/</code> en cada ejecución.</div>
+  </aside>
+</section>
+
+<!-- ============================ 7 · TRANSFORM & INTEGRATION ============================ -->
+<section class="slide" data-stage="tr" data-rubric="ETL transformation &amp; integration · <b>0.60</b>" data-title="Transformation &amp; integration">
+  <div class="body">
+    <div class="head">
+      <div class="kicker">§6.8 · docs/transformation_decisions.md · docs/integration_contract.md</div>
+      <h2>Integration is a contract, not “perform a merge”</h2>
+    </div>
+    <div class="row grow">
+      <div class="col" style="width:50%">
+        <div class="card funnel">
+          <h3>Spotify reconciliation (integration_report.json)</h3>
+          <div class="stepf"><span class="lbl">raw extract</span><div class="bar" style="width:100%"></div><span class="val">114,000</span></div>
+          <div class="stepf"><span class="lbl">TR-01 null metadata</span><div class="bar sub" style="width:2%"></div><span class="val">−1</span></div>
+          <div class="stepf"><span class="lbl">TR-02 duration ≤ 1 s</span><div class="bar sub" style="width:0.5%"></div><span class="val">−0</span></div>
+          <div class="stepf"><span class="lbl">TR-03 duplicates</span><div class="bar sub" style="width:6%"></div><span class="val">−450</span></div>
+          <div class="stepf"><span class="lbl">prepared = facts</span><div class="bar hit" style="width:99.6%"></div><span class="val">113,549</span></div>
+          <h3 style="margin-top:14px">Grammy side</h3>
+          <div class="stepf"><span class="lbl">raw extract</span><div class="bar" style="width:100%"></div><span class="val">4,810</span></div>
+          <div class="stepf"><span class="lbl">TR-06 no nominee</span><div class="bar sub" style="width:3%"></div><span class="val">−6</span></div>
+          <div class="stepf"><span class="lbl">TR-07 keys</span><div class="bar" style="width:92%"></div><span class="val">4,438</span></div>
+          <div class="stepf"><span class="lbl">matched keys</span><div class="bar hit" style="width:4.1%"></div><span class="val">181</span></div>
+        </div>
+      </div>
+      <div class="col grow">
+        <table>
+          <tbody>
+            <tr><td style="width:150px"><strong>Key</strong></td><td>(normalized title, normalized primary artist). TR-04: lower, trim, punctuation → space. TR-05: first artist before <code>;</code> / <code>feat.</code> / <code>&amp;</code> / <code>with</code></td></tr>
+            <tr><td><strong>Cardinality</strong></td><td><strong>many-to-one</strong>, enforced with <code>merge(validate="many_to_one")</code>: Grammy rows are aggregated per key first (286 keys with &gt; 1 award)</td></tr>
+            <tr><td><strong>Join</strong></td><td>LEFT from the catalog: the non-awarded tracks are the comparison group for RQ-01/02</td></tr>
+            <tr><td><strong>Unmatched</strong></td><td>Spotify: <code>is_grammy_winner=False</code>, default members SK 0 (TR-09). Grammys: <strong>4,257 keys (95.9%)</strong> counted, not loaded</td></tr>
+            <tr><td><strong>Duplicates</strong></td><td>0 per Spotify row by design; 49 keys hit &gt; 1 track_id (re-releases, max 9), so they are kept and measured</td></tr>
+          </tbody>
+        </table>
+        <div class="g3">
+          <div class="card stat"><div class="n ok">475</div><div class="l">matched fact rows</div></div>
+          <div class="card stat"><div class="n ok">282</div><div class="l">distinct awarded tracks</div></div>
+          <div class="card stat"><div class="n">0.42<small>%</small></div><div class="l">match rate (Warning if &gt; 5%)</div></div>
+        </div>
+        <div class="card warn"><p><strong>Rule of the phase:</strong> each TR-xx is justified by profiling or a requirement, never by “so the validation passes”. Values that cannot be repaired are dropped and counted, never imputed.</p></div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>Primero la conciliación: 114.000 − 1 − 450 = 113.549 filas preparadas, que son exactamente las filas de la tabla de hechos. Cada número sale del <code>integration_report.json</code> de la ejecución.</p>
+    <p>Luego el contrato: llave, cardinalidad, tratamiento de los no cruzados y de los cruces duplicados. La cardinalidad no es solo una declaración: pandas la valida y la tarea falla si se viola.</p>
+    <div class="q"><strong>Si preguntan «¿por qué no fuzzy matching?»</strong>: produce falsos positivos que no se pueden auditar. Preferimos cruce exacto sobre una llave normalizada y medir la cobertura.</div>
+  </aside>
+</section>
+
+<!-- ============================ 8 · DIMENSIONAL MODEL ============================ -->
+<section class="slide" data-stage="load" data-rubric="Dimensional DW &amp; analytics · <b>0.40</b>" data-title="Dimensional model">
+  <div class="body">
+    <div class="head">
+      <div class="kicker">§6.4 · §6.10 · sql/dw_schema.sql (idempotent) · docs/dimensional_model.md</div>
+      <h2>A requirements-driven star schema in PostgreSQL</h2>
+    </div>
+    <div class="row grow">
+      <div class="star" style="width:58%">
+        <svg viewBox="0 0 870 470" preserveAspectRatio="none" aria-hidden="true"><g stroke="#15171b" stroke-width="1.5"><line x1="435" y1="235" x2="130" y2="70"/><line x1="435" y1="235" x2="740" y2="70"/><line x1="435" y1="235" x2="130" y2="400"/><line x1="435" y1="235" x2="740" y2="400"/></g></svg>
+        <div class="t" style="left:0; top:10px"><header>dim_track</header><div>track_sk PK<br>track_id_spotify UK<br>track_name · album<br>duration_ms · explicit</div></div>
+        <div class="t" style="right:0; top:10px"><header>dim_artist</header><div>artist_sk PK<br>artist_name UK<br>artist_type (Solo / Collab)</div></div>
+        <div class="t" style="left:0; bottom:0"><header>dim_genre</header><div>genre_sk PK<br>genre_name UK</div></div>
+        <div class="t" style="right:0; bottom:0"><header>dim_time · dim_grammy_category</header><div>time_sk = year (0 = Unknown) · decade<br>category_sk PK · category_name UK<br>(0 = No nomination)</div></div>
+        <div class="t fact"><header>fact_music_performance</header><div>5 FK NOT NULL → dims<br>popularity · danceability · energy<br>valence · acousticness · loudness · tempo<br>is_grammy_winner · award_count<br>batch_id (= run_id) · loaded_at<br><strong>UNIQUE (track, genre, time, category)</strong></div></div>
+      </div>
+      <div class="col grow">
+        <div class="card ink"><h3>Grain</h3><p>One row per <strong>track × genre × award year × award category</strong>. Unmatched tracks use default members (SK 0), so there are no NULL foreign keys.</p></div>
+        <table>
+          <thead><tr><th>Requirement</th><th>DW element</th></tr></thead>
+          <tbody>
+            <tr><td>RQ-01 audio + popularity</td><td><code>vw_track_profile</code> → <code>vw_kpi1_audio_profile</code></td></tr>
+            <tr><td>RQ-02 uplift by genre</td><td><code>vw_kpi2_genre_uplift</code> (with n)</td></tr>
+            <tr><td>RQ-03 decade trends</td><td><code>vw_kpi3_decade_trends</code></td></tr>
+          </tbody>
+        </table>
+        <div class="card"><ul><li>Surrogate keys + <code>UNIQUE</code> business keys, used by the rerun upserts</li><li><code>CHECK</code> constraints mirror the GX ranges</li><li>Track-level KPIs collapse genres first, so a song counts once</li></ul></div>
+        <div class="g3">
+          <div class="card stat"><div class="n" style="font-size:30px">113,549</div><div class="l">facts</div></div>
+          <div class="card stat"><div class="n" style="font-size:30px">89,740</div><div class="l">tracks</div></div>
+          <div class="card stat"><div class="n" style="font-size:30px">17,645</div><div class="l">artists</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>Proceso de negocio: el desempeño de un track en su género, enriquecido con su reconocimiento Grammy. Di el grano en una frase exacta, porque es lo primero que preguntan.</p>
+    <p>Las claves sustitutas permiten miembros por defecto; las claves de negocio con UNIQUE son las que hacen idempotentes los upserts de la re-ejecución.</p>
+    <div class="q"><strong>Corrección que hicimos</strong>: antes los KPIs promediaban filas de hechos y contaban varias veces una canción que aparece en varios géneros. Ahora <code>vw_track_profile</code> agrupa por track; por eso el % explícito de los 2010s pasó de 15,3% a 20,2%.</div>
+  </aside>
+</section>
+
+<!-- ============================ 9 · AIRFLOW RELIABILITY ============================ -->
+<section class="slide" data-stage="all" data-rubric="Airflow orchestration &amp; reliability · <b>0.90</b>" data-title="Orchestration &amp; retry policy">
+  <div class="body">
+    <div class="head">
+      <div class="kicker">§6.11 · the highest-weighted criterion</div>
+      <h2>Retries only where another attempt can succeed</h2>
+    </div>
+    <div class="row grow">
+      <div class="col" style="width:58%">
+        <table>
+          <thead><tr><th>Task class</th><th>Failure type</th><th>Retries</th><th>Why</th></tr></thead>
+          <tbody>
+            <tr><td><code>extract_spotify</code><br><code>extract_grammys</code></td><td>Transient: I/O, DB refusing connections</td><td class="mono"><strong>2</strong> · 15 s · exp. backoff (≤ 2 min)</td><td>Same input + same code can succeed later. <strong>Proved in Test D.</strong></td></tr>
+            <tr><td><code>validate_*</code> (3 gates)</td><td>Deterministic data / contract</td><td class="mono"><strong>0</strong></td><td>The same batch fails the same way. Fail fast with evidence. <strong>Test B.</strong></td></tr>
+            <tr><td><code>transform_and_integrate</code></td><td>Deterministic code / cardinality</td><td class="mono"><strong>0</strong></td><td>A traceback is reproducible; retrying hides nothing.</td></tr>
+            <tr><td><code>load_dw</code></td><td>Transient: lock timeout, connection drop</td><td class="mono"><strong>1</strong> · 30 s</td><td>One atomic transaction, so a retry is safe; a single attempt limits repeated heavy loads.</td></tr>
+          </tbody>
+        </table>
+        <div class="card"><p><code>DEFAULT_ARGS = {"retries": 0}</code>: there is no blanket <code>retries=3</code>. Each task opts in according to its failure class. Full condition table in <code>docs/architecture.md §3</code>.</p></div>
+        <div class="row grow">
+          <figure class="shot contain" style="width:42%" data-full="%%FULL:overview%%"><img src="%%IMG:overview_crop%%" alt="Airflow grid with the four test runs side by side: A, C, B with a failed gate, D"><figcaption>Grid · runs A · C · B · D</figcaption></figure>
+          <div class="card grow"><h3>Reading the grid</h3><p>Columns are runs A, C, B and D. In run B, <code>validate_grammys_raw</code> is red and the three downstream cells are orange (<code>upstream_failed</code>). In run D everything is green, even though <code>extract_grammys</code> needed two tries.</p></div>
+        </div>
+      </div>
+      <div class="col grow">
+        <div class="card ink">
+          <h3>Observability: every task log starts with</h3>
+          <p class="mono" style="font-size:13.5px; line-height:1.5">BATCH CONTEXT | dag=reliable_music_pipeline run_id=test_d_transient_retry task=extract_grammys try=2</p>
+        </div>
+        <table>
+          <tbody>
+            <tr><td><strong>What ran?</strong></td><td>run_id, task, try in every log line</td></tr>
+            <tr><td><strong>When?</strong></td><td>task start / end (UI + task_states.txt)</td></tr>
+            <tr><td><strong>Succeeded?</strong></td><td>states + material counts (rows in / removed / matched / inserted / updated)</td></tr>
+            <tr><td><strong>Where &amp; why?</strong></td><td>red task + <code>upstream_failed</code>; error names the rule and the JSON path</td></tr>
+            <tr><td><strong>What next?</strong></td><td><code>up_for_retry</code> → try 2, or stop on Critical</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>Es el criterio de mayor peso (0,90). La idea central: un reintento solo tiene sentido si otro intento puede salir distinto sin cambiar la entrada ni el código.</p>
+    <p>Por eso las extracciones y la carga reintentan, y las compuertas y la transformación no. La prueba D demuestra el primer caso; la B, el segundo.</p>
+    <p>Para la observabilidad, recorre las cinco preguntas del PDF: qué corrió, cuándo, si funcionó, dónde y por qué falló, y qué pasó después.</p>
+    <div class="q"><strong>Si preguntan «¿por qué la carga solo tiene 1 reintento?»</strong>: es la tarea más pesada. Un reintento cubre un bloqueo puntual; si vuelve a fallar, el problema ya no es transitorio.</div>
+  </aside>
+</section>
+
+<!-- ============================ 10 · DEMO SCRIPT ============================ -->
+<section class="slide" data-stage="all" data-rubric="Demonstration of successful &amp; failed runs · <b>0.30</b>" data-title="Live demo">
+  <div class="body">
+    <div class="head">
+      <div class="kicker">Presentation rubric · demo · fallback evidence on the next slides</div>
+      <h2>Live demo: success, controlled failure, safe rerun</h2>
+    </div>
+    <div class="g3 grow">
+      <div class="card ok col">
+        <h3>1 · Successful run</h3>
+<pre>docker compose exec airflow \
+  airflow dags trigger \
+  reliable_music_pipeline</pre>
+        <p>Show the Grid: 7 green tasks. Open <code>load_dw</code> log → reconciliation summary.</p>
+        <figure class="shot grow contain" data-full="%%FULL:a2%%"><img src="%%IMG:a2_crop%%" alt="Expected result: all tasks green"><figcaption>expected</figcaption></figure>
+      </div>
+      <div class="card fail col">
+        <h3>2 · Controlled Critical failure</h3>
+<pre><span class="k">INSERT INTO</span> grammy_awards
+ (year, title, category,
+  nominee, artist, winner)
+<span class="k">VALUES</span> (<span class="f">1800</span>, …, TRUE);</pre>
+        <p>Trigger → <code>validate_grammys_raw</code> red, three tasks <code>upstream_failed</code>. Open the log → DQ-RAW-GRM-01 + JSON path.</p>
+        <figure class="shot grow contain" data-full="%%FULL:b2%%"><img src="%%IMG:b2_crop%%" alt="Expected result: failed raw gate, downstream blocked"><figcaption>expected</figcaption></figure>
+      </div>
+      <div class="card info col">
+        <h3>3 · Recover &amp; rerun</h3>
+<pre><span class="k">DELETE FROM</span> grammy_awards
+ <span class="k">WHERE</span> year = <span class="f">1800</span>;
+<span class="c">-- trigger again, then:</span>
+<span class="k">SELECT</span> COUNT(*) …</pre>
+        <p>Same 113,549 rows and same <code>SUM(popularity)</code>; only <code>batch_id</code> changes.</p>
+        <figure class="shot grow contain" data-full="%%FULL:c2%%"><img src="%%IMG:c2_crop%%" alt="Expected result: inserted 0, updated 113,549"><figcaption>expected</figcaption></figure>
+      </div>
+    </div>
+    <div class="card"><p><strong>Everything is reproducible:</strong> <code>bash scripts/run_reliability_tests.sh</code> runs A → C → B → D in about 6 minutes and regenerates the evidence. If the live environment fails, the screenshots on the next four slides come from exactly that script.</p></div>
+  </div>
+  <aside class="notes">
+    <p>La rúbrica de la presentación da 0,30 a la demostración. Lleva el entorno levantado <strong>antes</strong> de entrar (<code>docker compose up -d</code>) y el navegador abierto en Airflow.</p>
+    <ul><li>Orden: éxito (≈1 min) → inyección y fallo (≈1 min) → limpieza y re-ejecución.</li><li>Ten copiados los comandos SQL. Puerto de Airflow en tu máquina: 8082 (8080 por defecto).</li><li>Si algo falla en vivo, pasa a las capturas: son de las mismas ejecuciones.</li></ul>
+  </aside>
+</section>
+
+<!-- ============================ 11 · TEST A ============================ -->
+<section class="slide" data-stage="all" data-rubric="Successful run evidence · Test A §7.1" data-title="Test A · success">
+  <div class="body">
+    <div class="head">
+      <div class="kicker">Test A · run test_a_success · 2026-10-12 00:24:53 → 00:25:50 UTC</div>
+      <h2>Every stage succeeds, and every row is accounted for</h2>
+    </div>
+    <div class="row grow">
+      <figure class="shot" style="width:57%" data-full="%%FULL:a1%%"><img src="%%IMG:a1%%" alt="Airflow run page with seven successful task instances"><figcaption>Grid + task instances · all success</figcaption></figure>
+      <div class="col grow">
+        <div class="g2">
+          <div class="card stat"><div class="n ok">7/7</div><div class="l">tasks success · ≈ 57 s</div></div>
+          <div class="card stat"><div class="n ok">31/31</div><div class="l">expectations passed (9 · 4 · 18)</div></div>
+          <div class="card stat"><div class="n">113,549</div><div class="l">inserted = prepared rows</div></div>
+          <div class="card stat"><div class="n">475</div><div class="l">winner rows · 282 tracks</div></div>
+        </div>
+        <figure class="shot natural" data-full="%%FULL:a3%%"><img src="%%IMG:a3_crop%%" alt="load_dw log with the reconciliation summary"><figcaption>load_dw log · reconciliation summary</figcaption></figure>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>Lo que pide el PDF para la prueba A: extracción, compuertas, transformación con evidencia de conciliación, compuerta preparada y carga con resumen de filas, y que el dashboard refleje el DW.</p>
+    <p>Señala en el log: estado del DW antes de la carga (vacío porque lo reconstruimos), filas insertadas, actualizadas y purgadas, y que las filas de hechos igualan a las preparadas.</p>
+  </aside>
+</section>
+
+<!-- ============================ 12 · TEST B ============================ -->
+<section class="slide" data-stage="raw" data-rubric="Controlled failure evidence · Test B §7.2" data-title="Test B · controlled failure">
+  <div class="body">
+    <div class="head">
+      <div class="kicker">Test B · run test_b_controlled_failure · rule DQ-RAW-GRM-01 [Critical]</div>
+      <h2>An invalid source year stops the pipeline before it does harm</h2>
+    </div>
+    <div class="row grow">
+      <div class="col" style="width:56%">
+        <figure class="shot natural" data-full="%%FULL:b2%%"><img src="%%IMG:b2_crop%%" alt="Airflow graph: validate_grammys_raw failed, downstream tasks upstream_failed"><figcaption>Graph · failed gate, blocked downstream</figcaption></figure>
+        <figure class="shot natural" data-full="%%FULL:b3%%"><img src="%%IMG:b3_crop%%" alt="Failed task log showing CriticalDataQualityError for DQ-RAW-GRM-01"><figcaption>validate_grammys_raw log · actionable cause</figcaption></figure>
+<pre><span class="c">// runs/test_b_controlled_failure/grammys_raw_validation.json</span>
+<span class="k">"gate_decision"</span>: <span class="f">"STOP"</span>,
+<span class="k">"rule_id"</span>: <span class="s">"DQ-RAW-GRM-01"</span>, <span class="k">"severity"</span>: <span class="s">"Critical"</span>,
+<span class="k">"element_count"</span>: 4811, <span class="k">"unexpected_count"</span>: <span class="f">1</span>,
+<span class="k">"partial_unexpected_list"</span>: [<span class="f">1800</span>]</pre>
+      </div>
+      <div class="col grow">
+        <table>
+          <thead><tr><th>Stage</th><th>Expected</th><th>Observed</th></tr></thead>
+          <tbody>
+            <tr><td><code>extract_grammys</code></td><td>success</td><td><span class="pill s">success</span> 4,811 rows, invalid row not hidden</td></tr>
+            <tr><td><code>validate_grammys_raw</code></td><td>failure</td><td><span class="pill c">failed</span> no retry (retries=0)</td></tr>
+            <tr><td><code>transform_and_integrate</code></td><td>does not proceed</td><td><span class="pill w">upstream_failed</span></td></tr>
+            <tr><td><code>validate_prepared</code> · <code>load_dw</code></td><td>do not proceed</td><td><span class="pill w">upstream_failed</span></td></tr>
+            <tr><td>Spotify branch</td><td>unaffected</td><td><span class="pill s">success</span></td></tr>
+          </tbody>
+        </table>
+        <div class="card fail"><h3>Why this rule, why this response</h3><p>1958 is the first ceremony. A year like 1800 would create a false time member and distort the RQ-03 decade trend, so loading is unsafe. It is deterministic, so retrying cannot fix it.</p></div>
+        <div class="card ok"><h3>DW protected</h3><p>After the failed run: still <strong>113,549</strong> rows, <code>batch_id = test_c_safe_rerun</code> (previous good batch). Recovery: fix the source, trigger again.</p></div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>El PDF pide cinco evidencias: vista Graph o Grid, estado fallido, resultado de GX, log de la tarea fallida y explicación escrita. Las cinco están en esta lámina.</p>
+    <p>Punto fino: insertamos la fila en la base de datos, no en el CSV. Eso además demuestra que el pipeline lee los Grammy desde PostgreSQL.</p>
+    <p>La extracción no limpia: deja pasar la fila inválida para que la compuerta la vea. Esconder el problema en la extracción sería un antipatrón.</p>
+  </aside>
+</section>
+
+<!-- ============================ 13 · TEST C ============================ -->
+<section class="slide" data-stage="load" data-rubric="Repeatability &amp; safe rerun · Test C §7.3" data-title="Test C · safe rerun">
+  <div class="body">
+    <div class="head">
+      <div class="kicker">Test C · run test_c_safe_rerun · same input batch as Test A</div>
+      <h2>Same batch twice: nothing changes but the audit stamp</h2>
+    </div>
+    <div class="row grow">
+      <div class="col" style="width:46%">
+        <table>
+          <thead><tr><th>Metric</th><th class="num">Before</th><th class="num">After</th><th class="num">Δ</th></tr></thead>
+          <tbody>
+            <tr><td>fact rows</td><td class="num">113,549</td><td class="num">113,549</td><td class="num">0</td></tr>
+            <tr><td>grain duplicates</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+            <tr><td>SUM(popularity)</td><td class="num">3,783,956</td><td class="num">3,783,956</td><td class="num">0</td></tr>
+            <tr><td>AVG(danceability)</td><td class="num">0.567031</td><td class="num">0.567031</td><td class="num">0</td></tr>
+            <tr><td>SUM(award_count)</td><td class="num">538</td><td class="num">538</td><td class="num">0</td></tr>
+            <tr><td>winner rows</td><td class="num">475</td><td class="num">475</td><td class="num">0</td></tr>
+          </tbody>
+        </table>
+        <div class="g3">
+          <div class="card stat"><div class="n">0</div><div class="l">inserted</div></div>
+          <div class="card stat"><div class="n ok">113,549</div><div class="l">updated</div></div>
+          <div class="card stat"><div class="n">0</div><div class="l">purged</div></div>
+        </div>
+        <figure class="shot natural" data-full="%%FULL:c2%%"><img src="%%IMG:c2_crop%%" alt="load_dw log of the rerun: inserted 0, updated 113,549"><figcaption>load_dw log · rerun</figcaption></figure>
+      </div>
+      <div class="col grow">
+<pre><span class="c">-- strategy: snapshot load in ONE transaction</span>
+<span class="k">CONSTRAINT</span> uq_fact_grain <span class="k">UNIQUE</span> (track_sk, genre_sk, time_sk, category_sk)
+
+<span class="k">INSERT INTO</span> fact_music_performance (...) <span class="k">SELECT</span> ...
+<span class="k">ON CONFLICT</span> (track_sk, genre_sk, time_sk, category_sk)
+<span class="k">DO UPDATE SET</span> popularity = EXCLUDED.popularity, ...,
+              batch_id = EXCLUDED.batch_id
+<span class="k">RETURNING</span> (xmax = 0) <span class="k">AS</span> inserted;      <span class="c">-- inserted vs updated</span>
+
+<span class="k">DELETE FROM</span> fact_music_performance
+ <span class="k">WHERE</span> batch_id &lt;&gt; :run_id;            <span class="c">-- stale rows of older snapshots</span>
+<span class="c">-- rows written ≠ prepared rows  →  RuntimeError → ROLLBACK</span></pre>
+        <div class="card"><h3>Why upsert + purge (not upsert alone)</h3><p>If a track changes from unmatched to matched, its grain key changes. An upsert alone would keep the old row next to the new one. The purge removes rows that are not in the current snapshot.</p></div>
+        <div class="card info"><h3>Partial or failed runs</h3><p>Dimensions and facts share one <code>engine.begin()</code> transaction: any error rolls everything back and the previous snapshot stays. A failure before the load (Test B) never touches the DW.</p></div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>El PDF pide cuatro cosas: la estrategia, las llaves o lógica de carga, la comparación antes y después, y qué pasa con una ejecución parcial. Ve en ese orden.</p>
+    <p>Lee la línea clave: 0 insertadas, 113.549 actualizadas, 0 purgadas. Todas las medidas son idénticas; solo cambia el <code>batch_id</code>.</p>
+    <div class="q"><strong>Si preguntan «¿por qué no truncate and load?»</strong>: también es válido. Elegimos upsert + purga en una transacción porque nunca deja la tabla vacía para los lectores y deja contar inserciones y actualizaciones como evidencia.</div>
+  </aside>
+</section>
+
+<!-- ============================ 14 · TEST D ============================ -->
+<section class="slide" data-stage="ext" data-rubric="Selective-retry evidence · §8.3" data-title="Test D · selective retry">
+  <div class="body">
+    <div class="head">
+      <div class="kicker">Test D · run test_d_transient_retry · source DB refuses new connections</div>
+      <h2>A transient outage is retried and recovers on its own</h2>
+    </div>
+    <div class="row grow" style="align-items:flex-start">
+      <figure class="shot natural" style="width:calc(50% - 12px)" data-full="%%FULL:d2%%"><img src="%%IMG:d2_crop%%" alt="extract_grammys try 1 failed with OperationalError"><figcaption>try 1 · failed · OperationalError</figcaption></figure>
+      <figure class="shot natural" style="width:calc(50% - 12px)" data-full="%%FULL:d3%%"><img src="%%IMG:d3_crop%%" alt="extract_grammys try 2 success, 4,810 records extracted"><figcaption>try 2 · success · 4,810 records</figcaption></figure>
+    </div>
+    <div class="g4">
+      <div class="card"><h3>00:28:54</h3><p><code>ALTER DATABASE source_music_db ALLOW_CONNECTIONS false</code></p></div>
+      <div class="card fail"><h3>00:29:01 · try 1</h3><p><code>database "source_music_db" is not currently accepting connections</code> → <strong>up_for_retry</strong></p></div>
+      <div class="card"><h3>00:29:12</h3><p>connections restored (outage over)</p></div>
+      <div class="card ok"><h3>00:29:30 · try 2</h3><p>4,810 rows extracted → the remaining 6 tasks succeed; load is idempotent (0 inserted)</p></div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>El PDF acepta evidencia de reintentos o una justificación de las tareas sin reintento. Damos las dos: esta prueba más la tabla de política.</p>
+    <p>Simulamos una caída real: la base está viva, pero rechaza conexiones nuevas, como durante un reinicio o con el pool lleno. El primer intento falla, Airflow espera el retraso con backoff y el segundo intento funciona sin cambiar nada.</p>
+    <p>Contrasta con la prueba B: allí reintentar no habría servido, porque el dato malo sigue ahí.</p>
+  </aside>
+</section>
+
+<!-- ============================ 15 · DASHBOARD ============================ -->
+<section class="slide" data-stage="bi" data-rubric="KPI queries &amp; DW-backed dashboard · <b>0.40</b>" data-title="Dashboard &amp; KPIs">
+  <div class="body">
+    <div class="head">
+      <div class="kicker">§8.1 · Metabase on DW views · never on CSV</div>
+      <h2>What the trusted data says</h2>
+    </div>
+    <div class="row grow">
+      <figure class="shot contain" style="width:52%" data-full="%%FULL:mb%%"><img src="%%IMG:mb%%" alt="Metabase dashboard with KPI tiles, audio profile bars, decade trend lines and genre uplift"><figcaption>Metabase · Workshop-2 KPIs (DW)</figcaption></figure>
+      <div class="col grow">
+        <div class="card ok"><div class="row"><div class="stat" style="min-width:150px"><div class="n ok">+12.04</div><div class="l">popularity pts</div></div><div><h3>KPI-01 · RQ-01</h3><p>Winners 45.21 vs catalog 33.17 (282 vs 89,458 tracks). Higher valence (0.53 vs 0.47), lower acousticness (0.26 vs 0.33).</p></div></div></div>
+        <div class="card info"><div class="row"><div class="stat" style="min-width:150px"><div class="n" style="color:var(--info)">+45.6</div><div class="l">soul (n = 20)</div></div><div><h3>KPI-02 · RQ-02</h3><p>Then jazz +42.4 (n=9) and country +23.6 (n=26); negative in pop −21.3 and electro −16.2. Genres need ≥ 5 awarded tracks to be compared, and n is always shown.</p></div></div></div>
+        <div class="card warn"><div class="row"><div class="stat" style="min-width:150px"><div class="n" style="color:var(--warn)">20.2<small>%</small></div><div class="l">explicit, 2010s</div></div><div><h3>KPI-03 · RQ-03</h3><p>0% until the 1980s → 7.3% → 14.1% → 20.2%. Collaborations jump to 35.7% in the 2010s (n = 84 tracks).</p></div></div></div>
+        <div class="card"><p><strong>Query path:</strong> Metabase SQL → <code>vw_kpi1/2/3</code> → star schema. Built by <code>scripts/setup_metabase.py</code>. Metabase needs instructor approval; the same views work in Tableau (<code>docs/bi_tableau_guide.md</code>).</p></div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>Cada visualización responde a un requisito y consulta el DW, no el CSV, como exige el PDF.</p>
+    <p>Lee los hallazgos con cautela estadística: hay asociación, no causalidad (la popularidad es una sola foto de 2022), y los géneros con n pequeño son inestables. Por eso mostramos el n.</p>
+    <div class="q"><strong>Si preguntan por la herramienta</strong>: Metabase no está en la lista del PDF; pedimos aprobación. La lógica vive en vistas SQL del DW, así que Tableau o Power BI se conectan a lo mismo sin rehacer nada.</div>
+  </aside>
+</section>
+
+<!-- ============================ 16 · TRACEABILITY ============================ -->
+<section class="slide" data-stage="all" data-rubric="End-to-end traceability · §4.1 · §8.2" data-title="Traceability">
+  <div class="body">
+    <div class="head">
+      <div class="kicker">§8.2 · docs/traceability_matrix.md</div>
+      <h2>Every KPI can be traced back to a requirement, a risk and a rule</h2>
+    </div>
+    <div class="chain headrow"><div></div><div>Required data</div><div>Profiling risk</div><div>DQ rule</div><div>GX expectation</div><div>Transformation</div><div>DW element</div><div>KPI</div></div>
+    <div class="chain"><div class="rq">RQ-01</div><div>Spotify title / artists + Grammy nominee / artist</div><div><code>;</code> vs <code>feat.</code>: raw text matches 161 keys</div><div>PREP-07 Critical · PREP-08 Warning</div><div>distinct_values_to_contain_set · values_in_set(mostly .95)</div><div>TR-04 / 05 / 07</div><div><code>is_grammy_winner</code> → vw_kpi1</div><div>+12.04 pts uplift</div></div>
+    <div class="chain"><div class="rq">RQ-02</div><div>Spotify (track_id, genre), popularity</div><div>450 duplicates would double count</div><div>SPT-06 Warning · PREP-05 Critical</div><div>compound_columns_to_be_unique</div><div>TR-03 · TR-11</div><div><code>uq_fact_grain</code> → vw_kpi2</div><div>uplift by genre with n</div></div>
+    <div class="chain"><div class="rq">RQ-03</div><div>Grammy year · Spotify explicit, artists</div><div>out-of-range year breaks dim_time</div><div>GRM-01 Critical</div><div>values_to_be_between(1958, 2026)</div><div>TR-10 decade · TR-08 artist_type</div><div><code>dim_time</code> → vw_kpi3</div><div>20.2% explicit (2010s)</div></div>
+    <div class="chain"><div class="rq">ALL</div><div>matched / unmatched award fields</div><div>joins could leave rows half-filled</div><div>PREP-06 Critical</div><div>values_to_be_between + row_condition</div><div>TR-09 default members</div><div>SK 0 in dim_time / category</div><div>winner vs catalog split</div></div>
+    <div class="g3">
+      <div class="card"><h3>Reasoning chain (§4.1)</h3><p>requirement → data → profiling → risk → dimension → rule → threshold &amp; severity → expectation → result → pipeline action.</p></div>
+      <div class="card"><h3>Example, end to end</h3><p>RQ-03 needs years → profiling says 1958–2019 → rule GRM-01 [1958, 2026] Critical → violated in Test B → <strong>action: stop</strong> before dim_time is corrupted.</p></div>
+      <div class="card"><h3>Consistent IDs</h3><p>The same IDs appear in code comments, the GX <code>meta.rule_id</code>, the JSON results, the docs and the evidence register.</p></div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>El PDF insiste en que cada decisión debe poder recorrerse por la cadena completa. Toma una fila (RQ-03) y léela de izquierda a derecha.</p>
+    <p>Cierra con la idea de que los IDs no son decoración: aparecen en el código, en los resultados de GX y en las evidencias, así que cualquier evaluador puede seguir el hilo.</p>
+  </aside>
+</section>
+
+<!-- ============================ 17 · REPOSITORY ============================ -->
+<section class="slide" data-stage="all" data-rubric="Repository &amp; documentation · <b>0.30</b>" data-title="Repository &amp; reproducibility">
+  <div class="body">
+    <div class="head">
+      <div class="kicker">§9 · github.com/Macowli-0611/workshop2ETL</div>
+      <h2>Clone, configure one file, run one command</h2>
+    </div>
+    <div class="row grow">
+      <div class="col" style="width:44%">
+<pre>cp .env.example .env        <span class="c"># set passwords</span>
+docker compose up -d --build
+<span class="c"># postgres · airflow-init · source-seed</span>
+<span class="c"># (Grammy source + reconciliation) · airflow · metabase</span>
+
+bash scripts/run_reliability_tests.sh   <span class="c"># A · C · B · D</span>
+docker compose exec airflow python \
+  /opt/airflow/scripts/setup_metabase.py</pre>
+        <div class="card ok"><h3>Verified from zero</h3><p>The volume was deleted and the stack rebuilt: the schema bootstraps itself (idempotent DDL), and the source seeds and reconciles automatically.</p></div>
+        <div class="card"><h3>Security hygiene</h3><ul><li>Secrets only in <code>.env</code> (git-ignored); <code>.env.example</code> has placeholders</li><li>Password found in old git history → rotated</li><li>All ports bound to 127.0.0.1</li></ul></div>
+      </div>
+      <div class="col grow">
+<pre>dags/reliable_music_pipeline.py      <span class="c">TaskFlow DAG (wiring only)</span>
+src/  extract · validation · transform · load
+sql/  source_setup · dw_schema (+ KPI views) · dw_reset
+gx/   expectations · validation_definitions · checkpoints
+notebooks/data_profiling.ipynb       <span class="c">executed, outputs saved</span>
+scripts/  seed · reliability tests · metabase · charts
+          log export · screenshots
+docs/ requirements · architecture · quality_rules
+      transformation_decisions · integration_contract
+      dimensional_model · traceability · dashboard
+docs/evidence/
+      evidence_register.md           <span class="c">EV-01 … EV-17</span>
+      runs/&lt;run_id&gt;/*.json            <span class="c">GX · integration · load</span>
+      test_a… test_d/                 <span class="c">reports · logs · screenshots</span></pre>
+        <table>
+          <thead><tr><th>Evidence</th><th>Artifact</th><th>Proves</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">EV-02</td><td>extract_grammys log</td><td>Grammys come from PostgreSQL, not the CSV</td></tr>
+            <tr><td class="mono">EV-09</td><td>grammys_raw_validation.json (B)</td><td>failure linked to DQ-RAW-GRM-01</td></tr>
+            <tr><td class="mono">EV-12</td><td>dw_before / dw_after (C)</td><td>no duplicates, identical measures</td></tr>
+            <tr><td class="mono">EV-13</td><td>try_history.txt (D)</td><td>selective retry recovers</td></tr>
+          </tbody>
+        </table>
+        <div class="card info"><p>README covers all 17 mandatory sections; <code>docs/evidence/evidence_register.md</code> lists EV-01…EV-17.</p></div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>Rúbrica del repositorio (0,30): estructura, reproducibilidad, README, evidencia, higiene de seguridad y calidad de código.</p>
+    <p>Dato fuerte: probamos la reproducibilidad borrando el volumen y levantando todo de nuevo sin pasos manuales.</p>
+    <p>Seguridad: detectamos que una contraseña vieja estaba en el historial de git y la rotamos antes de publicar.</p>
+  </aside>
+</section>
+
+<!-- ============================ 18 · LIMITATIONS & CLOSE ============================ -->
+<section class="slide" data-stage="all" data-rubric="Assumptions &amp; limitations · conclusion" data-title="Limitations &amp; conclusion">
+  <div class="body">
+    <div class="head">
+      <div class="kicker">What the system can and cannot establish</div>
+      <h2>Honest limits, measurable guarantees</h2>
+    </div>
+    <div class="row grow">
+      <div class="col" style="width:46%">
+        <div class="card warn"><h3>Limitations</h3><ul>
+          <li><strong>Winners only</strong>: no nominee tier in the source</li>
+          <li><strong>Exact match</strong>: remasters, live versions and missing artists stay unmatched (4.1% of Grammy keys matched), measured every run</li>
+          <li><strong>One popularity snapshot</strong>: association, not causal post-award effect</li>
+          <li><strong>Small n</strong> in some genres: shown next to every value</li>
+          <li>Award years end in 2019</li>
+        </ul></div>
+        <div class="card info"><h3>Next steps</h3><ul>
+          <li>Second-pass fuzzy match into a <strong>review queue</strong>, never straight into the DW</li>
+          <li>A nominee source to enable a winner / nominee / catalog tier</li>
+          <li>Scheduled runs with alerting on Critical failures</li>
+          <li>Unit tests for TR rules in CI</li>
+        </ul></div>
+      </div>
+      <div class="col grow">
+        <table>
+          <thead><tr><th>Rubric criterion</th><th class="num">Pts</th><th>Where we prove it</th></tr></thead>
+          <tbody>
+            <tr><td>Requirements &amp; architecture</td><td class="num">0.40</td><td>slides 2–3 · traceability 16</td></tr>
+            <tr><td>Profiling &amp; quality risks</td><td class="num">0.60</td><td>slides 4–5 · executed notebook</td></tr>
+            <tr><td>Transformation &amp; integration</td><td class="num">0.60</td><td>slide 7 · integration_report.json</td></tr>
+            <tr><td>Great Expectations</td><td class="num">0.80</td><td>slide 6 · per-run JSON · gx/</td></tr>
+            <tr><td>Airflow &amp; reliability</td><td class="num">0.90</td><td>slides 9–14 · Tests A–D</td></tr>
+            <tr><td>Dimensional DW &amp; analytics</td><td class="num">0.40</td><td>slides 8, 15 · KPI views</td></tr>
+            <tr><td>Repository &amp; documentation</td><td class="num">0.30</td><td>slide 17 · README · evidence register</td></tr>
+          </tbody>
+        </table>
+        <div class="big-quote" style="margin-top:6px">Reliable does not mean nothing fails. It means failures are anticipated, controlled and observable.</div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>Cierre (≈40 s): nombra las limitaciones antes de que las pregunten; eso muestra criterio.</p>
+    <p>Luego la tabla: cada criterio de la rúbrica tiene una lámina y un artefacto que lo prueba. Termina con la frase del PDF y abre a preguntas. Las láminas de respaldo con respuestas vienen a continuación.</p>
+  </aside>
+</section>
+
+<!-- ============================ 19 · Q&A BACKUP ============================ -->
+<section class="slide" data-stage="all" data-rubric="Technical understanding in Q&amp;A · <b>0.25</b>" data-title="Backup · Q&amp;A">
+  <div class="body">
+    <div class="head">
+      <div class="kicker">Backup · likely questions</div>
+      <h2>Short answers to hard questions</h2>
+    </div>
+    <div class="qa">
+      <div><h3>Why are validation tasks not retried?</h3><p>Data-quality failures are deterministic: the same batch reproduces the same violation. Retrying only delays the evidence (Test B). Transient classes do retry (Test D).</p></div>
+      <div><h3>Why not pass DataFrames through XCom?</h3><p>XCom lives in the Airflow metadata DB and is meant for coordination. Tasks pass Parquet paths and small dicts; data is persisted per run for investigation.</p></div>
+      <div><h3>Validation vs transformation?</h3><p>Validation measures and records; transformation applies rules that stand on their own (TR-xx). We never change data to make a check pass. Values that cannot be repaired are dropped and counted, not imputed.</p></div>
+      <div><h3>What if load_dw fails halfway?</h3><p>One transaction: everything rolls back, and the previous snapshot stays. The retry or the next run converges because the load is idempotent.</p></div>
+      <div><h3>Why a LEFT join and many-to-one?</h3><p>Non-awarded tracks are the comparison group. Aggregating Grammy rows per key first makes duplicate matches impossible, and <code>validate="many_to_one"</code> enforces it.</p></div>
+      <div><h3>How did you pick thresholds?</h3><p>From profiling and the requirement they protect: e.g. duration ≥ 99.9% tolerates one corrupted row but stops a systemic error; match rate ≤ 5% flags a key that became too loose.</p></div>
+      <div><h3>Why is coverage so low? Is the integration wrong?</h3><p>The prepared gate proves the integration is coherent (PREP-06/07). Low coverage is structural (38% without artist, non-song categories), and it is measured every run.</p></div>
+      <div><h3>Why PostgreSQL and not SQLite?</h3><p>The brief forbids SQLite. PostgreSQL gives transactions, <code>ON CONFLICT</code> upserts, <code>CHECK</code> constraints and concurrent access for Airflow, Metabase and the pipeline.</p></div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>Lámina de respaldo: no la presentes, úsala para responder. La rúbrica da 0,25 a la comprensión técnica en las preguntas.</p>
+    <p>Regla de oro al responder: primero la decisión, luego la razón y por último la evidencia (archivo o prueba).</p>
+  </aside>
+</section>
+
+</main></div>
+
+<div id="notes-panel" role="region" aria-label="Speaker notes"><div class="meta"><span>Slide <b id="np-num"></b></span><span>Next: <b id="np-next"></b></span><span>Timer <b id="np-timer">00:00</b> (T to reset)</span></div><div id="np-body"></div></div>
+<div id="help">← → navigate · N notes · G overview · F fullscreen · click a screenshot to zoom</div>
+<div id="overview" role="dialog" aria-label="Slide overview"><ol id="ov-list"></ol></div>
+<div id="lightbox" role="dialog" aria-label="Screenshot"><img alt=""></div>
+<span class="sr" id="sr-status" aria-live="polite"></span>
+
+<script>
+(function () {
+  const STAGES = [["src", "Sources"], ["ext", "Extract"], ["raw", "Raw gate"], ["tr", "Transform"], ["prep", "Prepared gate"], ["load", "Load DW"], ["bi", "Dashboard"]];
+  const slides = Array.from(document.querySelectorAll(".slide"));
+  const stage = document.getElementById("stage");
+  const total = slides.length;
+  let current = 0, t0 = Date.now();
+
+  // chrome: rail, rubric tag, footer
+  slides.forEach((s, i) => {
+    const on = (s.dataset.stage || "").split(",");
+    const rail = document.createElement("div");
+    rail.className = "rail";
+    rail.setAttribute("aria-hidden", "true");
+    rail.innerHTML = STAGES.map(([k, l]) => {
+      const active = on.includes("all") || on.includes(k);
+      const gate = k === "raw" || k === "prep";
+      return `<span class="${active ? "on" : ""} ${gate ? "gate" : ""}">${l}</span>`;
+    }).join("") + `<span class="sep" style="border:none;background:none"></span><span class="rubric">${s.dataset.rubric || ""}</span>`;
+    s.prepend(rail);
+    const foot = document.createElement("div");
+    foot.className = "foot";
+    foot.innerHTML = `<span>Workshop-2 · Reliable Batch Data Pipeline · ETL G01</span><span>${String(i + 1).padStart(2, "0")} / ${String(total).padStart(2, "0")}</span>`;
+    s.append(foot);
+  });
+
+  function fit() {
+    const k = Math.min(window.innerWidth / 1600, window.innerHeight / 900);
+    stage.style.transform = `translate(-50%, -50%) scale(${k})`;
+  }
+  window.addEventListener("resize", fit); fit();
+
+  function show(i) {
+    current = Math.max(0, Math.min(total - 1, i));
+    slides.forEach((s, j) => s.classList.toggle("active", j === current));
+    document.getElementById("progress").style.width = `${((current + 1) / total) * 100}%`;
+    const notes = slides[current].querySelector(".notes");
+    document.getElementById("np-body").innerHTML = notes ? notes.innerHTML : "";
+    document.getElementById("np-num").textContent = `${current + 1} / ${total} · ${slides[current].dataset.title}`;
+    document.getElementById("np-next").textContent = current + 1 < total ? slides[current + 1].dataset.title : "—";
+    document.getElementById("sr-status").textContent = `Slide ${current + 1} of ${total}: ${slides[current].dataset.title}`;
+    history.replaceState(null, "", `#${current + 1}`);
+  }
+
+  // overview
+  const ov = document.getElementById("overview"), ovList = document.getElementById("ov-list");
+  slides.forEach((s, i) => {
+    const li = document.createElement("li"), b = document.createElement("button");
+    b.textContent = s.dataset.title; b.onclick = () => { show(i); ov.classList.remove("open"); };
+    li.append(b); ovList.append(li);
+  });
+
+  // lightbox
+  const lb = document.getElementById("lightbox"), lbImg = lb.querySelector("img");
+  document.querySelectorAll(".shot").forEach(f => f.addEventListener("click", () => {
+    const img = f.querySelector("img");
+    lbImg.src = f.dataset.full || img.src; lbImg.alt = img.alt; lb.classList.add("open");
+  }));
+  lb.addEventListener("click", () => lb.classList.remove("open"));
+
+  document.addEventListener("keydown", e => {
+    if (lb.classList.contains("open")) { if (e.key === "Escape" || e.key === " ") lb.classList.remove("open"); return; }
+    const k = e.key.toLowerCase();
+    if (["arrowright", "pagedown", " ", "enter"].includes(k)) { e.preventDefault(); show(current + 1); }
+    else if (["arrowleft", "pageup", "backspace"].includes(k)) { e.preventDefault(); show(current - 1); }
+    else if (k === "home") show(0);
+    else if (k === "end") show(total - 1);
+    else if (k === "n") document.getElementById("notes-panel").classList.toggle("open");
+    else if (k === "g" || (k === "escape" && ov.classList.contains("open"))) ov.classList.toggle("open");
+    else if (k === "f") { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen().catch(() => {}); }
+    else if (k === "t") t0 = Date.now();
+    else if (k === "h") { const h = document.getElementById("help"); h.style.opacity = h.style.opacity === "0" ? "1" : "0"; }
+  });
+
+  setInterval(() => {
+    const s = Math.floor((Date.now() - t0) / 1000);
+    document.getElementById("np-timer").textContent = `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+  }, 1000);
+
+  setTimeout(() => { document.getElementById('help').style.opacity = '0'; }, 7000);
+  const start = parseInt(location.hash.slice(1), 10);
+  show(Number.isFinite(start) ? start - 1 : 0);
+})();
+</script>
+</body>
+</html>
