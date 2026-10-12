@@ -7,7 +7,7 @@ Implements the unified engineering phase:
 - Execution of the cross-source integration contract (Spotify catalog + Grammy Awards).
 - Derivation of analytical measures and dimensions for the star schema.
 
-Integration Contract (docs/integration_contract.md):
+Integration Contract (docs/transformation_and_integration.md#2-integration-contract):
 - Matching key: (clean_track_name, clean_primary_artist) on both sides.
 - Grammy side is aggregated to one row per key before the join, so each Spotify row
   matches at most one award record (many-to-one; duplicate matches are impossible by design).
@@ -15,7 +15,7 @@ Integration Contract (docs/integration_contract.md):
 - Unmatched Grammy keys, multi-award keys and keys matching several catalog tracks are
   measured and written to integration_report.json for every run.
 
-Every transformation decision is listed in docs/transformation_decisions.md (TR-xx IDs).
+Every transformation decision is listed in docs/transformation_and_integration.md (TR-xx IDs).
 """
 
 import os

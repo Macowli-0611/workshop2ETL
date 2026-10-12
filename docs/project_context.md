@@ -14,20 +14,20 @@ Two datasets describe music from two different worlds. **Spotify** (114,000 trac
 
 | Brief section | Requirement | How it is met | Where |
 | :--- | :--- | :--- | :--- |
-| 6.1 | ≥ 3 analytical requirements that need both sources | RQ-01 audio profile, RQ-02 genre uplift, RQ-03 decade trends | `docs/analytical_requirements.md` |
+| 6.1 | ≥ 3 analytical requirements that need both sources | RQ-01 audio profile, RQ-02 genre uplift, RQ-03 decade trends | `docs/requirements_and_traceability.md` |
 | 6.2 | Docker, Airflow 3.1.8, PostgreSQL, Grammy CSV loaded into a source DB, no secrets in git | `docker-compose.yaml` (5 services), `source-seed` service with row-count reconciliation, `.env` git-ignored | `docker-compose.yaml`, `scripts/seed_source_db.py` |
 | 6.3 | Reproducible profiling with evidence for every risk | Executed notebook with tables and figures; risk matrix | `notebooks/data_profiling.ipynb` |
 | 6.4 / 6.10 | Requirements-driven dimensional model in PostgreSQL | Star schema: 1 fact + 5 dimensions, grain, keys, KPI views | `docs/dimensional_model.md`, `sql/dw_schema.sql` |
 | 6.5 | ≥ 6 rules with dimension, threshold, severity, requirement | 18 rules (13 Critical, 3 Warning, 2 Informational) | `docs/quality_rules.md` |
 | 6.6 | GX suites, validation definitions, checkpoints, rule mapping, results | 3 suites / 32 expectations, each tagged with its rule ID; per-run JSON results | `src/validation.py`, `gx/`, `docs/evidence/runs/` |
 | 6.7 | Two observable source branches with raw gates; a controlled Critical failure | `extract_* → validate_*_raw` per source; Test B | `dags/reliable_music_pipeline.py`, Test B |
-| 6.8 | Justified transformations and an integration contract | 12 TR rules; key, cardinality, unmatched and duplicate handling, all measured | `docs/transformation_decisions.md`, `docs/integration_contract.md` |
+| 6.8 | Justified transformations and an integration contract | 12 TR rules; key, cardinality, unmatched and duplicate handling, all measured | `docs/transformation_and_integration.md`, `docs/transformation_and_integration.md` |
 | 6.9 | Separate prepared gate that gates the load | `validate_prepared` (19 expectations); Test E proves it blocks `load_dw` | Test E |
 | 6.11 | Meaningful tasks, dependencies, small XCom, selective retries, logging | 7 tasks; paths in XCom; retries only for transient failures; batch context in every log | `docs/architecture.md` |
 | 7.1–7.3 | Success, controlled failure, safe rerun | Tests A, B, C (+ D for retries, E for the prepared gate) | `docs/evidence/test_*` |
 | 4.4 / 8.3 | Evidence register and minimum evidence set | EV-01 … EV-20 | `docs/evidence/evidence_register.md` |
-| 8.1 | ≥ 3 KPIs from the DW (no CSV) in a BI tool | Looker Studio report on DW views | `docs/dashboard_spec.md` |
-| 8.2 | End-to-end traceability | requirement → data → risk → rule → expectation → transformation → DW → KPI | `docs/traceability_matrix.md` |
+| 8.1 | ≥ 3 KPIs from the DW (no CSV) in a BI tool | Looker Studio report on DW views | `docs/dashboard.md` |
+| 8.2 | End-to-end traceability | requirement → data → risk → rule → expectation → transformation → DW → KPI | `docs/requirements_and_traceability.md` |
 | 9.2 | README with 17 sections | Sections 1–17 | `README.md` |
 
 ## 3. Tools and why they were chosen

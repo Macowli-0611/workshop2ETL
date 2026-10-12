@@ -100,7 +100,7 @@ docker run --rm --network workshop2etl_workshop2_net -v "$PWD":/work -w /work \
   mcr.microsoft.com/playwright/python:v1.47.0-jammy \
   bash -c "pip install -q playwright==1.47.0 && python scripts/capture_airflow_evidence.py"
 
-# Rebuild the defense deck (docs/presentation.html)
+# Rebuild the defense deck (docs/presentation/presentation.html)
 python3 scripts/build_presentation.py
 ```
 
@@ -117,7 +117,7 @@ docker compose up -d airflow                                   # only if you jus
 docker compose exec airflow python /opt/airflow/scripts/publish_dw.py
 ```
 
-Expected output: 6 tables copied, `role bi_reader: SELECT on 7 views only`, `reconciliation local == published: True`. Then use **Refresh data** in the report. To build the report from scratch, follow [`docs/bi_looker_studio_guide.md`](docs/bi_looker_studio_guide.md).
+Expected output: 6 tables copied, `role bi_reader: SELECT on 7 views only`, `reconciliation local == published: True`. Then use **Refresh data** in the report. To build the report from scratch, follow [`docs/dashboard.md`](docs/dashboard.md#4-setup-guide-looker-studio).
 
 ### Metabase (local alternative, works offline)
 
@@ -134,7 +134,7 @@ Open the *Public URL* it prints (`http://localhost:3000/public/dashboard/...`).
 1. Start Docker Desktop, then run `docker compose up -d` in the project folder. Wait about one minute.
 2. Open Airflow (`http://localhost:8080` or your `AIRFLOW_PORT`) and check that the DAG is there.
 3. Open the Looker Studio report once. The free Neon database sleeps when idle, and the first load takes a few seconds.
-4. Open `docs/presentation.html` in the browser. Press **F** for fullscreen and **N** for speaker notes.
+4. Open `docs/presentation/presentation.html` in the browser. Press **F** for fullscreen and **N** for speaker notes.
 5. Keep a terminal open in the project folder with the demo commands below ready to paste.
 
 **Live demo (about 3 minutes)**

@@ -14,7 +14,7 @@ A reliable batch pipeline that integrates the **Spotify catalog (CSV)** with the
 | Orchestration | Airflow 3.1.8, `from airflow.sdk import dag, task` → [`dags/reliable_music_pipeline.py`](dags/reliable_music_pipeline.py) |
 | Validation | GX 1.x: 3 suites, 3 Validation Definitions, 3 Checkpoints, 18 rules / 32 expectations → [`src/validation.py`](src/validation.py), [`gx/`](gx/) |
 | Databases | PostgreSQL 16: `source_music_db` (Grammy source), `dw_music_analytics` (DW) |
-| BI | **Looker Studio** dashboard on the DW views ([live report](https://lookerstudio.google.com/reporting/c356ff56-e259-40bf-86e3-083f3924a837), [`docs/dashboard_spec.md`](docs/dashboard_spec.md)); local alternative: Metabase |
+| BI | **Looker Studio** dashboard on the DW views ([live report](https://lookerstudio.google.com/reporting/c356ff56-e259-40bf-86e3-083f3924a837), [`docs/dashboard.md`](docs/dashboard.md)); local alternative: Metabase |
 | Evidence | [`docs/evidence/evidence_register.md`](docs/evidence/evidence_register.md) |
 
 ---
@@ -31,7 +31,7 @@ Music success is measured in two disconnected worlds: **listener consumption** (
 | **RQ-02** | In which genres is a Grammy associated with the largest popularity uplift? | Spotify genre, popularity · Grammy winner | KPI-02 uplift per genre (n ≥ 5) | Track × genre |
 | **RQ-03** | How have explicit content and collaborations evolved among awarded tracks? | Spotify explicit, artists · Grammy year | KPI-03 % explicit / % collaborations per decade | Awarded track × decade |
 
-Scope, the attribute → source mapping and the reason both sources are needed: [`docs/analytical_requirements.md`](docs/analytical_requirements.md). End-to-end chain: [`docs/traceability_matrix.md`](docs/traceability_matrix.md).
+Scope, the attribute → source mapping and the reason both sources are needed: [`docs/requirements_and_traceability.md`](docs/requirements_and_traceability.md). End-to-end chain: [`docs/requirements_and_traceability.md`](docs/requirements_and_traceability.md#6-end-to-end-traceability-matrix).
 
 ## 3. Data sources
 
@@ -82,9 +82,9 @@ Exported configuration: [`gx/expectations/`](gx/expectations/), [`gx/validation_
 
 ## 8. Transformation and integration strategy
 
-One transformation phase, with each rule justified independently of validation ([`docs/transformation_decisions.md`](docs/transformation_decisions.md), TR-01..TR-12): drop corrupted rows, drop impossible durations, dedup (track, genre), normalize text, extract the primary artist, aggregate Grammys per key, derive `artist_type` and `decade`, map unmatched rows to default members, cast and round.
+One transformation phase, with each rule justified independently of validation ([`docs/transformation_and_integration.md`](docs/transformation_and_integration.md), TR-01..TR-12): drop corrupted rows, drop impossible durations, dedup (track, genre), normalize text, extract the primary artist, aggregate Grammys per key, derive `artist_type` and `decade`, map unmatched rows to default members, cast and round.
 
-**Integration contract** ([`docs/integration_contract.md`](docs/integration_contract.md)): LEFT JOIN of the catalog to Grammy keys aggregated on (normalized title, normalized primary artist). The join is **many-to-one** and enforced (`validate="many_to_one"`). Result for this batch: **475 matched rows / 282 distinct tracks / 181 matched keys**; **4,257 Grammy keys unmatched (95.9%)**, measured in `integration_report.json`. Reconciliation: 114,000 − 1 − 450 = 113,549 prepared rows = 113,549 fact rows.
+**Integration contract** ([`docs/transformation_and_integration.md`](docs/transformation_and_integration.md#2-integration-contract)): LEFT JOIN of the catalog to Grammy keys aggregated on (normalized title, normalized primary artist). The join is **many-to-one** and enforced (`validate="many_to_one"`). Result for this batch: **475 matched rows / 282 distinct tracks / 181 matched keys**; **4,257 Grammy keys unmatched (95.9%)**, measured in `integration_report.json`. Reconciliation: 114,000 − 1 − 450 = 113,549 prepared rows = 113,549 fact rows.
 
 ## 9. Dimensional model
 
@@ -132,7 +132,7 @@ Star schema in [`sql/dw_schema.sql`](sql/dw_schema.sql) (idempotent; applied by 
 
 ## 15. Dashboard and analytical outputs
 
-**Looker Studio** (a BI tool named in the brief) reads the Data Warehouse through its KPI views. Because Looker Studio connects from Google's servers, `scripts/publish_dw.py` publishes the star schema and its views to a cloud PostgreSQL (Neon) after each load, in one transaction and with a local-vs-cloud reconciliation ([`publish_report.json`](docs/evidence/bi_publication/publish_report.json)). Looker Studio uses a **read-only role that can only select the views**. Setup: [`docs/bi_looker_studio_guide.md`](docs/bi_looker_studio_guide.md).
+**Looker Studio** (a BI tool named in the brief) reads the Data Warehouse through its KPI views. Because Looker Studio connects from Google's servers, `scripts/publish_dw.py` publishes the star schema and its views to a cloud PostgreSQL (Neon) after each load, in one transaction and with a local-vs-cloud reconciliation ([`publish_report.json`](docs/evidence/bi_publication/publish_report.json)). Looker Studio uses a **read-only role that can only select the views**. Setup: [`docs/dashboard.md`](docs/dashboard.md#4-setup-guide-looker-studio).
 
 **Live report:** https://lookerstudio.google.com/reporting/c356ff56-e259-40bf-86e3-083f3924a837
 
@@ -189,16 +189,31 @@ Rebuild the DW from scratch: `docker compose exec postgres psql -U postgres -d d
 
 ### Repository structure
 
+Follows the structure suggested in section 9.1 of the brief, plus `data/` (original inputs), `scripts/` (automation) and `QUICKSTART.md`.
+
 ```
-dags/reliable_music_pipeline.py   DAG (TaskFlow, airflow.sdk)
-src/                              extract · validation (GX) · transform · load
-sql/                              source_setup.sql · dw_schema.sql (+ KPI views) · dw_reset.sql · init script
-gx/                               exported Expectation Suites, Validation Definitions, Checkpoints
-notebooks/data_profiling.ipynb    executed profiling notebook
-scripts/                          seed · reliability tests · DW publication · Metabase · KPI charts · log export · screenshots
-docs/                             requirements · architecture · quality rules · transformations · integration · model · dashboard · traceability
-docs/evidence/                    register · per-run JSON (runs/) · Test A–E reports, logs, screenshots · KPI outputs
-data/                             original input files (unchanged)
+workshop2ETL/
+├── dags/reliable_music_pipeline.py        Airflow DAG (TaskFlow, airflow.sdk)
+├── src/                                   extract.py · validation.py (GX) · transform.py · load.py
+├── gx/                                    exported Expectation Suites, Validation Definitions, Checkpoints
+├── notebooks/data_profiling.ipynb         executed profiling notebook
+├── sql/                                   source_setup.sql · dw_schema.sql (+ KPI views) · dw_reset.sql · init script
+├── data/                                  original input files (unchanged)
+├── scripts/                               source seed · reliability tests · DW publication · charts · screenshots · deck build
+├── docs/
+│   ├── architecture.md                    architecture, DAG, failure & retry policy, observability, safe rerun
+│   ├── quality_rules.md                   18 rules + GX design and expectation → rule mapping
+│   ├── requirements_and_traceability.md   analytical requirements, scope, end-to-end traceability matrix
+│   ├── transformation_and_integration.md  TR-01…TR-12 decision record + integration contract
+│   ├── dimensional_model.md               star schema: grain, keys, measures, requirement support
+│   ├── dashboard.md                       Looker Studio dashboard, KPIs, results, setup guide
+│   ├── project_context.md                 what was built and why, mapped to the brief and rubric
+│   ├── presentation/                      defense deck (HTML + PDF)
+│   └── evidence/                          evidence register · per-run JSON · Test A–E reports, logs, screenshots · KPI outputs
+├── docker-compose.yaml · Dockerfile · requirements.txt
+├── .env.example                           (.env is created locally and never committed)
+├── QUICKSTART.md
+└── README.md
 ```
 
 ## 17. Assumptions and limitations
@@ -213,4 +228,4 @@ data/                             original input files (unchanged)
 
 ### Defense deck
 
-[`docs/presentation.html`](docs/presentation.html) is a single-file deck with 19 concise, visual slides (one message per slide) and embedded evidence screenshots; speaker notes carry the detail. Keys: ← → to navigate, **N** for speaker notes, **G** for overview, **F** for fullscreen; click a screenshot to zoom. A PDF export is in [`docs/presentation.pdf`](docs/presentation.pdf). To rebuild it after new evidence: `python3 scripts/build_presentation.py` (content in `scripts/presentation_template.html`).
+[`docs/presentation/presentation.html`](docs/presentation/presentation.html) is a single-file deck with 19 concise, visual slides (one message per slide) and embedded evidence screenshots; speaker notes carry the detail. Keys: ← → to navigate, **N** for speaker notes, **G** for overview, **F** for fullscreen; click a screenshot to zoom. A PDF export is in [`docs/presentation/presentation.pdf`](docs/presentation/presentation.pdf). To rebuild it after new evidence: `python3 scripts/build_presentation.py` (content in `scripts/presentation_template.html`).

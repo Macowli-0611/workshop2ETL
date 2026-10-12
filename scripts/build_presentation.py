@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Builds the standalone defense deck: docs/presentation.html
+Builds the standalone defense deck: docs/presentation/presentation.html
 
 - Layout and content: scripts/presentation_template.html
 - Images: evidence screenshots (docs/evidence/...), the Metabase dashboard and the
@@ -27,7 +27,7 @@ from PIL import Image
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EV = os.path.join(ROOT, "docs", "evidence")
 TEMPLATE = os.path.join(ROOT, "scripts", "presentation_template.html")
-OUTPUT = os.path.join(ROOT, "docs", "presentation.html")
+OUTPUT = os.path.join(ROOT, "docs", "presentation", "presentation.html")
 
 # key -> (source, crop box as fractions (left, top, right, bottom) or None)
 IMAGES = {

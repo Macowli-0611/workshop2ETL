@@ -6,7 +6,7 @@ Workshop-2 · Building a Reliable Batch Data Pipeline. This document covers sect
 
 ## 1. Principles
 
-1. **Validation and transformation are separate activities.** Validation detects, measures and records evidence. Transformation applies known rules to clean, standardize and integrate (see [transformation_decisions.md](transformation_decisions.md)). Data is never modified just to make a validation pass.
+1. **Validation and transformation are separate activities.** Validation detects, measures and records evidence. Transformation applies known rules to clean, standardize and integrate (see [transformation_and_integration.md](transformation_and_integration.md)). Data is never modified just to make a validation pass.
 2. **Thresholds are engineering decisions.** Each one comes from profiling evidence (`notebooks/data_profiling.ipynb`), a requirement, the source contract or a post-transformation invariant, not from "what the current batch happens to pass".
 3. **Severity policy** (implemented in `src/validation.py:run_gate`):
 
