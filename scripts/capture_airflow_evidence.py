@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Captures Airflow UI screenshots for the reliability evidence (Tests A-E)
-and the Metabase dashboard screenshot.
+and the BI dashboards (Metabase local, Looker Studio public link).
 
 Runs in the official Playwright image attached to the compose network:
     docker run --rm --network workshop2etl_workshop2_net -v "$PWD":/work -w /work \
@@ -113,6 +113,19 @@ def main():
             page.wait_for_timeout(8000)
             page.screenshot(path=f"{EVID}/kpi/metabase_dashboard.png", full_page=True)
             print("[+]", f"{EVID}/kpi/metabase_dashboard.png")
+        # BI dashboard in Looker Studio (public view link)
+        looker_file = f"{EVID}/kpi/looker_studio_url.txt"
+        if os.path.exists(looker_file):
+            looker = browser.new_page(viewport={"width": 1600, "height": 1100}, device_scale_factor=1.5,
+                                      locale="en-US")
+            looker.goto(open(looker_file).read().strip(), wait_until="domcontentloaded", timeout=90000)
+            looker.wait_for_timeout(25000)  # charts query the cloud DW copy
+            canvas = looker.locator(".ng2-canvas-container, .lego-report, .page").first
+            if canvas.count():
+                canvas.screenshot(path=f"{EVID}/kpi/looker_studio_dashboard.png")
+            else:
+                looker.screenshot(path=f"{EVID}/kpi/looker_studio_dashboard.png", full_page=True)
+            print("[+]", f"{EVID}/kpi/looker_studio_dashboard.png")
         browser.close()
 
 

@@ -110,6 +110,10 @@ services:
       MB_ADMIN_EMAIL: ${MB_ADMIN_EMAIL:-}
       MB_ADMIN_PASSWORD: ${MB_ADMIN_PASSWORD:-}
       METABASE_PORT: ${METABASE_PORT:-3000}
+      # BI publication to the cloud PostgreSQL read by Looker Studio (scripts/publish_dw.py)
+      BI_DW_URL: ${BI_DW_URL:-}
+      BI_READER_USER: ${BI_READER_USER:-bi_reader}
+      BI_READER_PASSWORD: ${BI_READER_PASSWORD:-}
     ports:
       - "127.0.0.1:${AIRFLOW_PORT:-8080}:8080"
     volumes: *airflow-common-volumes

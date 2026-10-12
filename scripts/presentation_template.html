@@ -226,7 +226,7 @@ pre .k { color: #f59f6b; } pre .s { color: #9fd3a8; } pre .f { color: #ff8a7a; }
           <span class="pill k">Airflow 3.1.8 · airflow.sdk</span>
           <span class="pill k">Great Expectations 1.x</span>
           <span class="pill k">PostgreSQL 16</span>
-          <span class="pill k">Metabase</span>
+          <span class="pill k">Looker Studio</span>
           <span class="pill k">Docker Compose</span>
         </div>
         <div class="big-quote">“A Data Engineer does not build scripts.<br>A Data Engineer designs systems.”</div>
@@ -287,7 +287,7 @@ pre .k { color: #f59f6b; } pre .s { color: #9fd3a8; } pre .f { color: #ff8a7a; }
       <div class="node gate"><b>validate_spotify_raw</b>GX · 9 expectations</div><div class="arr span2" style="font-size:26px">⇉</div>
       <div class="node span2"><b>transform_and_integrate</b>TR-01…TR-12 + integration contract. Runs only if <strong>both</strong> raw gates pass</div><div class="arr span2">→</div>
       <div class="node gate span2"><b>validate_prepared</b>GX · 19 expectations</div><div class="arr span2">→</div>
-      <div class="node dw span2"><b>load_dw</b>star schema · 1 transaction<br><br><b>→ Metabase</b>3 KPIs on DW views</div>
+      <div class="node dw span2"><b>load_dw</b>star schema · 1 transaction<br><br><b>→ Looker Studio</b>3 KPIs on DW views (published copy)</div>
       <div class="node src"><b>source_music_db</b>PostgreSQL · grammy_awards</div><div class="arr">→</div>
       <div class="node"><b>extract_grammys</b>SQL query → Parquet</div><div class="arr">→</div>
       <div class="node gate"><b>validate_grammys_raw</b>GX · 4 expectations</div>
@@ -819,23 +819,23 @@ load_dw_task(prep)</pre>
 <section class="slide" data-stage="bi" data-rubric="KPI queries &amp; DW-backed dashboard · <b>0.40</b>" data-title="Dashboard &amp; KPIs">
   <div class="body">
     <div class="head">
-      <div class="kicker">§8.1 · Metabase on DW views · never on CSV</div>
+      <div class="kicker">§8.1 · Looker Studio on DW views · never on CSV</div>
       <h2>What the trusted data says</h2>
     </div>
     <div class="row grow">
-      <figure class="shot contain" style="width:52%" data-full="%%FULL:mb%%"><img src="%%IMG:mb%%" alt="Metabase dashboard with KPI tiles, audio profile bars, decade trend lines and genre uplift"><figcaption>Metabase · Workshop-2 KPIs (DW)</figcaption></figure>
+      <figure class="shot contain" style="width:52%" data-full="%%FULL:lk%%"><img src="%%IMG:lk%%" alt="Looker Studio dashboard: KPI scorecards, audio profile columns, decade combo chart, genre bubble scatter and heat-map table"><figcaption>Looker Studio · Spotify x Grammy KPIs (DW)</figcaption></figure>
       <div class="col grow">
         <div class="card ok"><div class="row"><div class="stat" style="min-width:150px"><div class="n ok">+12.04</div><div class="l">popularity pts</div></div><div><h3>KPI-01 · RQ-01</h3><p>Winners 45.21 vs catalog 33.17 (282 vs 89,458 tracks). Higher valence (0.53 vs 0.47), lower acousticness (0.26 vs 0.33).</p></div></div></div>
         <div class="card info"><div class="row"><div class="stat" style="min-width:150px"><div class="n" style="color:var(--info)">+45.6</div><div class="l">soul (n = 20)</div></div><div><h3>KPI-02 · RQ-02</h3><p>Then jazz +42.4 (n=9) and country +23.6 (n=26); negative in pop −21.3 and electro −16.2. Genres need ≥ 5 awarded tracks to be compared, and n is always shown.</p></div></div></div>
         <div class="card warn"><div class="row"><div class="stat" style="min-width:150px"><div class="n" style="color:var(--warn)">20.2<small>%</small></div><div class="l">explicit, 2010s</div></div><div><h3>KPI-03 · RQ-03</h3><p>0% until the 1980s → 7.3% → 14.1% → 20.2%. Collaborations jump to 35.7% in the 2010s (n = 84 tracks).</p></div></div></div>
-        <div class="card"><p><strong>Query path:</strong> Metabase SQL → <code>vw_kpi1/2/3</code> → star schema. Built by <code>scripts/setup_metabase.py</code>. Metabase needs instructor approval; the same views work in Tableau (<code>docs/bi_tableau_guide.md</code>).</p></div>
+        <div class="card"><p><strong>Query path:</strong> Looker Studio → role <code>bi_reader</code> (views only) → <code>vw_kpi_*</code> → star schema, published to a cloud PostgreSQL by <code>publish_dw.py</code> (one transaction, reconciled with the local DW). Local alternative: Metabase on the same views.</p></div>
       </div>
     </div>
   </div>
   <aside class="notes">
     <p>Every visualization answers a requirement and queries the DW, never the CSV, as the brief requires.</p>
     <p>Read the findings with statistical care: this is association, not causation (popularity is a single 2022 snapshot), and genres with a small n are unstable. That is why n is always shown.</p>
-    <div class="q"><strong>If asked about the tool</strong>: Metabase is not in the brief's named list, so instructor approval was requested. The logic lives in SQL views in the DW, so Tableau or Power BI connect to the same thing without rework.</div>
+    <div class="q"><strong>If asked “why a cloud copy?”</strong>: Looker Studio runs on Google's servers and cannot reach a database on localhost. We publish the DW to a cloud PostgreSQL after each load, reconcile counts and KPIs, and Looker uses a role that can only read the views. The logic lives in SQL views, so any BI tool shows the same numbers.</div>
   </aside>
 </section>
 
@@ -879,7 +879,7 @@ docker compose up -d --build
 
 bash scripts/run_reliability_tests.sh   <span class="c"># A · C · B · D</span>
 docker compose exec airflow python \
-  /opt/airflow/scripts/setup_metabase.py</pre>
+  /opt/airflow/scripts/publish_dw.py      <span class="c"># → Looker Studio</span></pre>
         <div class="card ok"><h3>Verified from zero</h3><p>The volume was deleted and the stack rebuilt: the schema bootstraps itself (idempotent DDL), and the source seeds and reconciles automatically.</p></div>
         <div class="card"><h3>Security hygiene</h3><ul><li>Secrets only in <code>.env</code> (git-ignored); <code>.env.example</code> has placeholders</li><li>Password found in old git history → rotated</li><li>All ports bound to 127.0.0.1</li></ul></div>
       </div>
@@ -889,7 +889,7 @@ src/  extract · validation · transform · load
 sql/  source_setup · dw_schema (+ KPI views) · dw_reset
 gx/   expectations · validation_definitions · checkpoints
 notebooks/data_profiling.ipynb       <span class="c">executed, outputs saved</span>
-scripts/  seed · reliability tests · metabase · charts
+scripts/  seed · reliability tests · publish_dw · charts
           log export · screenshots
 docs/ requirements · architecture · quality_rules
       transformation_decisions · integration_contract

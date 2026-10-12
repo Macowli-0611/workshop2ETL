@@ -182,3 +182,30 @@ FROM vw_track_profile p
 JOIN dim_time t ON t.time_sk = p.award_year
 WHERE p.is_grammy_winner AND p.award_year > 0
 GROUP BY t.decade;
+
+-- ==============================================================
+-- 8. BI-READY VIEWS (Looker Studio cannot compute across rows, so these
+--    expose each chart in the exact shape it needs; same logic as above)
+-- ==============================================================
+
+-- One row with the headline KPIs (scorecards)
+CREATE OR REPLACE VIEW vw_kpi_scorecards AS
+SELECT
+    (SELECT ROUND(MAX(avg_popularity) FILTER (WHERE award_status = 'Grammy Winner')
+                - MAX(avg_popularity) FILTER (WHERE award_status = 'General Catalog'), 2)
+       FROM vw_kpi1_audio_profile)                                              AS kpi1_popularity_uplift,
+    (SELECT n_tracks FROM vw_kpi1_audio_profile WHERE award_status = 'Grammy Winner') AS awarded_tracks,
+    (SELECT COUNT(*) FROM dim_track)                                             AS catalog_tracks,
+    (SELECT pct_explicit FROM vw_kpi3_decade_trends ORDER BY decade DESC LIMIT 1) AS kpi3_explicit_latest_decade,
+    (SELECT pct_collaboration FROM vw_kpi3_decade_trends ORDER BY decade DESC LIMIT 1) AS kpi3_collab_latest_decade;
+
+-- RQ-01 audio profile in long format (one bar per feature x award status)
+CREATE OR REPLACE VIEW vw_kpi1_audio_profile_long AS
+SELECT award_status, n_tracks, f.feature, f.mean_value
+FROM vw_kpi1_audio_profile,
+     LATERAL (VALUES ('Danceability', avg_danceability), ('Energy', avg_energy),
+                     ('Valence', avg_valence), ('Acousticness', avg_acousticness)) AS f(feature, mean_value);
+
+-- RQ-02 genres with enough awarded tracks to be compared (n >= 5)
+CREATE OR REPLACE VIEW vw_kpi2_genre_uplift_comparable AS
+SELECT * FROM vw_kpi2_genre_uplift WHERE n_winner_tracks >= 5;

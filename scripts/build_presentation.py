@@ -53,6 +53,7 @@ IMAGES = {
     "overview": ("dag_overview_all_runs.png", None),
     "overview_crop": ("dag_overview_all_runs.png", (0.045, 0.12, 0.228, 0.40)),
     "mb": ("kpi/metabase_dashboard.png", (0.0, 0.0, 1.0, 0.83)),
+    "lk": ("kpi/looker_studio_dashboard.png", None),
     "prof1": ("notebook:0", None),
     "prof_missing": ("notebook:0", (0.0, 0.0, 0.345, 1.0)),
     "prof_duration": ("notebook:0", (0.335, 0.0, 0.67, 1.0)),

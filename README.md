@@ -11,7 +11,7 @@ A reliable batch pipeline that integrates the **Spotify catalog (CSV)** with the
 | Orchestration | Airflow 3.1.8, `from airflow.sdk import dag, task` → [`dags/reliable_music_pipeline.py`](dags/reliable_music_pipeline.py) |
 | Validation | GX 1.x: 3 suites, 3 Validation Definitions, 3 Checkpoints, 18 rules / 32 expectations → [`src/validation.py`](src/validation.py), [`gx/`](gx/) |
 | Databases | PostgreSQL 16: `source_music_db` (Grammy source), `dw_music_analytics` (DW) |
-| BI | Metabase dashboard on DW views ([`docs/dashboard_spec.md`](docs/dashboard_spec.md)); Tableau alternative ([`docs/bi_tableau_guide.md`](docs/bi_tableau_guide.md)) |
+| BI | **Looker Studio** dashboard on the DW views ([live report](https://lookerstudio.google.com/reporting/c356ff56-e259-40bf-86e3-083f3924a837), [`docs/dashboard_spec.md`](docs/dashboard_spec.md)); local alternative: Metabase |
 | Evidence | [`docs/evidence/evidence_register.md`](docs/evidence/evidence_register.md) |
 
 ---
@@ -129,17 +129,19 @@ Star schema in [`sql/dw_schema.sql`](sql/dw_schema.sql) (idempotent; applied by 
 
 ## 15. Dashboard and analytical outputs
 
-Metabase dashboard on the DW views (`scripts/setup_metabase.py`). All questions are SQL over `dw_music_analytics`.
+**Looker Studio** (a BI tool named in the brief) reads the Data Warehouse through its KPI views. Because Looker Studio connects from Google's servers, `scripts/publish_dw.py` publishes the star schema and its views to a cloud PostgreSQL (Neon) after each load, in one transaction and with a local-vs-cloud reconciliation ([`publish_report.json`](docs/evidence/bi_publication/publish_report.json)). Looker Studio uses a **read-only role that can only select the views**. Setup: [`docs/bi_looker_studio_guide.md`](docs/bi_looker_studio_guide.md).
 
-![Metabase dashboard](docs/evidence/kpi/metabase_dashboard.png)
+**Live report:** https://lookerstudio.google.com/reporting/c356ff56-e259-40bf-86e3-083f3924a837
+
+![Looker Studio dashboard](docs/evidence/kpi/looker_studio_dashboard.png)
 
 | Requirement | DW element | KPI / visualization | Result |
 | :--- | :--- | :--- | :--- |
-| RQ-01 | `vw_kpi1_audio_profile` | Tile + grouped bars | Winners **+12.04** popularity pts (45.21 vs 33.17); higher valence (0.53 vs 0.47), lower acousticness (0.26 vs 0.33) |
-| RQ-02 | `vw_kpi2_genre_uplift` | Row chart + table with n | Largest uplift: soul +45.6 (n=20), jazz +42.4 (n=9), country +23.6 (n=26); negative in pop (−21.3), electro (−16.2) |
-| RQ-03 | `vw_kpi3_decade_trends` | Line chart + tile | Explicit share 0% (≤1980s) → 7.3% → 14.1% → **20.2% (2010s)**; collaborations **35.7%** in the 2010s |
+| RQ-01 | `vw_kpi_scorecards`, `vw_kpi1_audio_profile_long` | Scorecards + grouped columns | Winners **+12.04** popularity pts (45.21 vs 33.17); higher valence (0.53 vs 0.47), lower acousticness (0.26 vs 0.33) |
+| RQ-02 | `vw_kpi2_genre_uplift_comparable` | Bubble scatter (winners vs catalog per genre, size = n) + heat-map table with n | Largest uplift: soul +45.6 (n=20), jazz +42.4 (n=9), country +23.6 (n=26); negative in pop (−21.3), electro (−16.2) |
+| RQ-03 | `vw_kpi3_decade_trends`, `vw_kpi_scorecards` | Combo chart (tracks per decade + % lines) + scorecard | Explicit share 0% (≤1980s) → 7.3% → 14.1% → **20.2% (2010s)**; collaborations **35.7%** in the 2010s |
 
-Metabase is not in the brief's named list, so instructor approval must be requested. The alternative is Tableau Desktop on the same views: [`docs/bi_tableau_guide.md`](docs/bi_tableau_guide.md). Static copies with the numbers in CSV: [`docs/evidence/kpi/`](docs/evidence/kpi/).
+A local Metabase dashboard on the same views is also included (`scripts/setup_metabase.py`, [`metabase_dashboard.png`](docs/evidence/kpi/metabase_dashboard.png)) for offline demos, and [`docs/bi_tableau_guide.md`](docs/bi_tableau_guide.md) shows the same views in Tableau. Static copies with the numbers in CSV: [`docs/evidence/kpi/`](docs/evidence/kpi/).
 
 ## 16. Setup and execution
 
@@ -153,7 +155,8 @@ docker compose up -d --build    # postgres, airflow-init, source-seed (Grammy so
 | What | Where |
 | :--- | :--- |
 | Airflow UI | `http://localhost:8080` (or `AIRFLOW_PORT`), DAG `reliable_music_pipeline`. Local only: every visitor is admin, bound to 127.0.0.1. |
-| Metabase | `http://localhost:3000` (or `METABASE_PORT`) |
+| Looker Studio | public report link in section 15 (data from the published DW copy) |
+| Metabase (local) | `http://localhost:3000` (or `METABASE_PORT`) |
 | PostgreSQL | `localhost:5432`, databases `source_music_db`, `dw_music_analytics` |
 
 ```bash
@@ -163,14 +166,17 @@ docker compose exec airflow airflow dags trigger reliable_music_pipeline
 # Reproduce Tests A, C, B, D and E with evidence (about 8 minutes); pass letters to run a subset
 bash scripts/run_reliability_tests.sh
 
-# Build the BI dashboard and the static KPI charts
+# Publish the DW to the cloud PostgreSQL read by Looker Studio (needs BI_DW_URL in .env)
+docker compose exec airflow python /opt/airflow/scripts/publish_dw.py
+
+# Build the local Metabase dashboard and the static KPI charts
 docker compose exec airflow python /opt/airflow/scripts/setup_metabase.py
 docker compose exec airflow python /opt/airflow/scripts/generate_kpi_charts.py
 
 # Re-execute the profiling notebook
 docker compose exec -w /opt/airflow/notebooks airflow jupyter nbconvert --to notebook --execute --inplace data_profiling.ipynb
 
-# Capture Airflow / Metabase screenshots (official Playwright image)
+# Capture Airflow / Metabase / Looker Studio screenshots (official Playwright image)
 docker run --rm --network workshop2etl_workshop2_net -v "$PWD":/work -w /work \
   mcr.microsoft.com/playwright/python:v1.47.0-jammy \
   bash -c "pip install -q playwright==1.47.0 && python scripts/capture_airflow_evidence.py"
@@ -186,7 +192,7 @@ src/                              extract · validation (GX) · transform · loa
 sql/                              source_setup.sql · dw_schema.sql (+ KPI views) · dw_reset.sql · init script
 gx/                               exported Expectation Suites, Validation Definitions, Checkpoints
 notebooks/data_profiling.ipynb    executed profiling notebook
-scripts/                          seed · reliability tests · Metabase · KPI charts · log export · screenshots
+scripts/                          seed · reliability tests · DW publication · Metabase · KPI charts · log export · screenshots
 docs/                             requirements · architecture · quality rules · transformations · integration · model · dashboard · traceability
 docs/evidence/                    register · per-run JSON (runs/) · Test A–E reports, logs, screenshots · KPI outputs
 data/                             original input files (unchanged)
@@ -199,6 +205,7 @@ data/                             original input files (unchanged)
 - **Multi-award keys** keep the latest year and the first category; RQ-03 uses the track's latest award.
 - **Popularity is a single Spotify snapshot**: the results show association, not a causal post-award effect. Genres with few awarded tracks (n shown) are unstable.
 - **Award years end in 2019**; the year rule allows up to 2026 for future batches.
+- **The Looker Studio dashboard reads a published copy of the DW**, refreshed by `publish_dw.py` after each load (Looker caches data for up to 12 h). The local DW remains the system of record.
 - The local setup (all-admin Airflow UI, Metabase public link) is meant for a single developer machine and binds every port to 127.0.0.1; it is not a production configuration.
 
 ### Defense deck

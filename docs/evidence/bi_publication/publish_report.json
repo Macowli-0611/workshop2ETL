@@ -1,0 +1,40 @@
+{
+  "published_at": "2026-10-12T02:13:34.735612+00:00",
+  "source": "local dw_music_analytics",
+  "target": "cloud PostgreSQL (host omitted)",
+  "rows_copied": {
+    "dim_artist": 17645,
+    "dim_track": 89740,
+    "dim_genre": 114,
+    "dim_time": 53,
+    "dim_grammy_category": 68,
+    "fact_music_performance": 113549
+  },
+  "read_only_role": "bi_reader",
+  "views_granted": [
+    "vw_kpi_scorecards",
+    "vw_kpi1_audio_profile",
+    "vw_kpi1_audio_profile_long",
+    "vw_kpi2_genre_uplift",
+    "vw_kpi2_genre_uplift_comparable",
+    "vw_kpi3_decade_trends",
+    "vw_track_profile"
+  ],
+  "local": {
+    "fact_rows": 113549,
+    "sum_popularity": 3783956,
+    "winner_rows": 475,
+    "kpi1_popularity_uplift": 12.04,
+    "kpi3_explicit_latest_decade": 20.24,
+    "kpi2_comparable_genres": 33
+  },
+  "published": {
+    "fact_rows": 113549,
+    "sum_popularity": 3783956,
+    "winner_rows": 475,
+    "kpi1_popularity_uplift": 12.04,
+    "kpi3_explicit_latest_decade": 20.24,
+    "kpi2_comparable_genres": 33
+  },
+  "reconciled": true
+}

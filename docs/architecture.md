@@ -11,7 +11,7 @@ Workshop-2 · Building a Reliable Batch Data Pipeline. This document covers sect
  ───────                    ───────              ───────────────────          ─────────               ────────────────────────   ────            ──────
  data/spotify_dataset.csv ─► extract_spotify ──► validate_spotify_raw ──┐
    (CSV file source)          (retries: 2)        DQ-RAW-SPT-01..06      │
-                                                  (retries: 0)           ├─► transform_and_integrate ─► validate_prepared ─► load_dw ─► dw_music_analytics ─► Metabase
+                                                  (retries: 0)           ├─► transform_and_integrate ─► validate_prepared ─► load_dw ─► dw_music_analytics ─► publish_dw ─► Looker Studio
  source_music_db          ─► extract_grammys ──► validate_grammys_raw ──┘    TR-01..TR-12            DQ-PREP-INT-01..08    (retries: 1)   star schema +        dashboard
    .grammy_awards             (retries: 2)        DQ-RAW-GRM-01..04           integration contract    (retries: 0)          single tx,     KPI views            (3 KPIs)
    (PostgreSQL source)                            (retries: 0)                (retries: 0)                                  upsert+purge
@@ -31,7 +31,8 @@ Reliability controls: dependencies, selective retries, structured logs with batc
 | `airflow-init` | `airflow db migrate`. |
 | `source-seed` | Source preparation and reconciliation (runs once per `up`, before Airflow starts). |
 | `airflow` (3.1.8) | `airflow standalone`: api-server, scheduler, dag-processor, triggerer. Logs persisted in `./logs`. |
-| `metabase` | BI tool connected to the DW (`scripts/setup_metabase.py` builds the dashboard). |
+| `metabase` | Local BI alternative on the DW views (`scripts/setup_metabase.py`). |
+| *cloud* Neon PostgreSQL | Published read-only copy of the DW for **Looker Studio** (`scripts/publish_dw.py`; role `bi_reader` can only select the views). |
 
 ---
 
