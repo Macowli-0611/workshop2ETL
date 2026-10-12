@@ -1,0 +1,12 @@
+{
+  "name": "spotify_raw_validation_definition",
+  "data": {
+    "data_source": "spotify_raw_source",
+    "data_asset": "spotify_raw_asset",
+    "batch_definition": "spotify_raw_batch",
+    "batch_parameters": {
+      "dataframe": "<staging parquet of the current DAG run>"
+    }
+  },
+  "suite": "spotify_raw_suite"
+}

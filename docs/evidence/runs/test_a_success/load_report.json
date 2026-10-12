@@ -1,0 +1,32 @@
+{
+  "batch_id": "test_a_success",
+  "prepared_rows": 113549,
+  "fact_rows_inserted": 113549,
+  "fact_rows_updated": 0,
+  "fact_rows_purged_stale": 0,
+  "before": {
+    "fact_rows": 0,
+    "fact_winner_rows": 0,
+    "dim_track": 0,
+    "dim_artist": 0,
+    "dim_genre": 0,
+    "dim_time": 1,
+    "dim_grammy_category": 1,
+    "sum_popularity": 0,
+    "avg_danceability": 0.0,
+    "sum_award_count": 0
+  },
+  "after": {
+    "fact_rows": 113549,
+    "fact_winner_rows": 475,
+    "dim_track": 89740,
+    "dim_artist": 17645,
+    "dim_genre": 114,
+    "dim_time": 53,
+    "dim_grammy_category": 68,
+    "sum_popularity": 3783956,
+    "avg_danceability": 0.567031,
+    "sum_award_count": 538
+  },
+  "fact_rows_equal_prepared_rows": true
+}

@@ -1,0 +1,28 @@
+{
+  "executed_at": "2026-10-12T00:40:10.987585+00:00",
+  "source_file": "the_grammy_awards.csv",
+  "target": "source_music_db.grammy_awards",
+  "ddl": "sql/source_setup.sql",
+  "csv_rows": 4810,
+  "db_rows": 4810,
+  "row_discrepancy": 0,
+  "csv_winner_true": 4810,
+  "db_winner_true": 4810,
+  "csv_year_range": [
+    1958,
+    2019
+  ],
+  "db_year_range": [
+    1958,
+    2019
+  ],
+  "csv_null_nominee": 6,
+  "db_null_nominee": 6,
+  "decisions": [
+    "Original CSV preserved untouched in data/; values are inserted as-is (no cleaning).",
+    "published_at / updated_at parsed to TIMESTAMPTZ (UTC); unparseable values would become NULL.",
+    "Surrogate id SERIAL and created_at added by the source DDL; the extraction query does not use them.",
+    "Re-running the seed drops and recreates the table, so the source always mirrors the provided CSV."
+  ],
+  "reconciled": true
+}

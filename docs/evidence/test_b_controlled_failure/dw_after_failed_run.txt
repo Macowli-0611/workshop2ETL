@@ -1,0 +1,5 @@
+ fact_rows | grain_duplicates | sum_popularity | avg_danceability | sum_award_count | winner_rows |     batch_ids     
+-----------+------------------+----------------+------------------+-----------------+-------------+-------------------
+    113549 |                0 |        3783956 |         0.567031 |             538 |         475 | test_c_safe_rerun
+(1 row)
+

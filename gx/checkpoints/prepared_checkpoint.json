@@ -1,0 +1,8 @@
+{
+  "name": "prepared_checkpoint",
+  "validation_definitions": [
+    "prepared_validation_definition"
+  ],
+  "result_format": "SUMMARY",
+  "policy": "Applied in src/validation.py:run_gate (Critical -> CriticalDataQualityError, Warning -> logged and recorded, Informational -> recorded)"
+}

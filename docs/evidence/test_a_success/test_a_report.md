@@ -1,46 +1,28 @@
-# Reliability Evidence Report: Test A — Successful End-to-End Execution
-**Workshop-2: Building a Reliable Batch Data Pipeline**
-*Course: ETL (G01) — Apache Airflow 3.1.8 & Great Expectations*
+# Test A — Successful Run (Section 7.1)
 
----
+**Run:** `reliable_music_pipeline` / `test_a_success` · manual trigger · 2026-10-12 00:24:53 → 00:25:50 UTC (≈ 57 s) · final state **success**.
+The DW was rebuilt (`sql/dw_reset.sql`) right before this run, so `load_dw` starts from an empty warehouse.
 
-## 1. Execution Identifiers
-* **DAG ID:** `reliable_music_pipeline`
-* **DAG Run ID:** `manual__2026-10-07T22:30:45.658550+00:00`
-* **Final DAG State:** `success`
-* **Start Time (UTC):** `2026-10-07T22:30:46.044064+00:00`
-* **End Time (UTC):** `2026-10-07T22:31:25.180737+00:00`
-* **Total Duration:** 39.14 seconds
+## Task states
 
----
+| Stage | Task | State | Evidence |
+| :--- | :--- | :---: | :--- |
+| Extract both sources | `extract_spotify` (CSV), `extract_grammys` (PostgreSQL `source_music_db`) | success | `logs/extract_*_attempt1.log`: 114,000 and 4,810 rows. The Grammy log says "extracted from PostgreSQL". |
+| Raw validation gates | `validate_spotify_raw`, `validate_grammys_raw` | success | [`spotify_raw_validation.json`](../runs/test_a_success/spotify_raw_validation.json) 9/9 · [`grammys_raw_validation.json`](../runs/test_a_success/grammys_raw_validation.json) 4/4 · decision `CONTINUE` |
+| Transform & integrate | `transform_and_integrate` | success | [`integration_report.json`](../runs/test_a_success/integration_report.json): 114,000 → 113,549 rows (−1 null metadata, −450 duplicates); 475 matched rows / 282 tracks; reconciliation `true` |
+| Prepared validation | `validate_prepared` | success | [`prepared_validation.json`](../runs/test_a_success/prepared_validation.json) 18/18 · `CONTINUE` |
+| Load | `load_dw` | success | [`load_report.json`](../runs/test_a_success/load_report.json): inserted 113,549 · updated 0 · purged 0 · fact rows 0 → 113,549 = prepared rows |
+| Analytics | Metabase dashboard and KPI views | — | [`../kpi/metabase_dashboard.png`](../kpi/metabase_dashboard.png) reads the DW views |
 
-## 2. Task Instance Execution States
+## Screenshots
 
-| Task (`task_id`) | Branch / Stage | State | Start (UTC) | End (UTC) | Duration |
-| :--- | :--- | :---: | :---: | :---: | :---: |
-| `extract_spotify` | Spotify Branch (CSV Extraction) | **success** | 22:30:46 | 22:30:49 | 3.8s |
-| `extract_grammys` | Grammy Branch (PostgreSQL Relational DB) | **success** | 22:30:46 | 22:30:49 | 3.4s |
-| `validate_spotify_raw` | Raw Validation Gate (GX Suites) | **success** | 22:30:50 | 22:30:59 | 9.6s |
-| `validate_grammys_raw` | Raw Validation Gate (GX Suites) | **success** | 22:30:50 | 22:30:59 | 9.1s |
-| `transform_and_integrate`| Convergence, Cleaning & Integration Contract | **success** | 22:31:00 | 22:31:02 | 1.9s |
-| `validate_prepared` | Prepared Data Quality Gate (GX) | **success** | 22:31:02 | 22:31:08 | 5.7s |
-| `load_dw` | Star Schema Dimensional Loading | **success** | 22:31:08 | 22:31:24 | 16.5s |
+- `a1_grid_task_states.png`: Grid view, all 7 task instances in `success`.
+- `a2_graph_success.png`: Graph view showing both branches converging into transformation, then the prepared gate and the load.
+- `a3_load_dw_log.png`: `load_dw` log with batch context, DW state before the load and the reconciliation summary.
 
----
+## DW after the run (`dw_after_run.txt`)
 
-## 3. Data Warehouse Audit Reconciliation Metrics
+113,549 fact rows · 0 grain duplicates · `SUM(popularity)` = 3,783,956 · `AVG(danceability)` = 0.567031 · 475 winner rows · `batch_id` = `test_a_success`.
+Dimensions: 89,740 tracks · 17,645 artists · 114 genres · 53 time members · 68 categories.
 
-* **Total fact rows loaded in `fact_music_performance`:** 113,549 rows
-* **Total awarded tracks identified in DW:** 475 tracks
-* **Total unique artists in `dim_artist`:** 17,645 artists
-* **Total unique tracks in `dim_track`:** 89,740 tracks
-* **Total catalog genres in `dim_genre`:** 114 genres
-* **Total award categories mapped in `dim_grammy_category`:** 192 active categories
-
----
-
-## 4. Engineering Findings & Conclusion
-The entire workflow completed autonomously with zero human intervention:
-1. Heterogeneous sources were accurately extracted (Spotify via CSV, Grammys via relational PostgreSQL SQL query).
-2. Great Expectations raw and prepared validation suites evaluated and approved the batch under documented policies.
-3. Clean star schema dimensional tables were populated with full referential integrity.
+**Conclusion.** With a batch that satisfies the Critical policy, every stage succeeds and leaves reconciliation evidence. Source rows → clean rows → prepared rows → fact rows are accounted for at every step.

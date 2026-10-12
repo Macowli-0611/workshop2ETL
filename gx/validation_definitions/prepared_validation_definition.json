@@ -1,0 +1,12 @@
+{
+  "name": "prepared_validation_definition",
+  "data": {
+    "data_source": "prepared_source",
+    "data_asset": "prepared_asset",
+    "batch_definition": "prepared_batch",
+    "batch_parameters": {
+      "dataframe": "<staging parquet of the current DAG run>"
+    }
+  },
+  "suite": "prepared_music_suite"
+}

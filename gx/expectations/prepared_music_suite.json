@@ -1,0 +1,296 @@
+{
+  "name": "prepared_music_suite",
+  "expectations": [
+    {
+      "type": "expect_table_columns_to_match_set",
+      "kwargs": {
+        "column_set": [
+          "track_id_spotify",
+          "track_name",
+          "album_name",
+          "artist_name",
+          "artist_type",
+          "genre_name",
+          "duration_ms",
+          "explicit",
+          "popularity",
+          "danceability",
+          "energy",
+          "valence",
+          "acousticness",
+          "loudness",
+          "tempo",
+          "grammy_category",
+          "award_year",
+          "decade",
+          "is_grammy_winner",
+          "is_grammy_nominee",
+          "award_count"
+        ]
+      },
+      "meta": {
+        "rule_id": "DQ-PREP-INT-03",
+        "severity": "Critical"
+      },
+      "notes": "DQ-PREP-INT-03 [Critical]: Prepared schema must match the load contract exactly.",
+      "severity": "critical"
+    },
+    {
+      "type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "track_id_spotify"
+      },
+      "meta": {
+        "rule_id": "DQ-PREP-INT-02",
+        "severity": "Critical"
+      },
+      "notes": "DQ-PREP-INT-02 [Critical]: Dimension business key / label track_id_spotify must be 100% non-null.",
+      "severity": "critical"
+    },
+    {
+      "type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "track_name"
+      },
+      "meta": {
+        "rule_id": "DQ-PREP-INT-02",
+        "severity": "Critical"
+      },
+      "notes": "DQ-PREP-INT-02 [Critical]: Dimension business key / label track_name must be 100% non-null.",
+      "severity": "critical"
+    },
+    {
+      "type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "artist_name"
+      },
+      "meta": {
+        "rule_id": "DQ-PREP-INT-02",
+        "severity": "Critical"
+      },
+      "notes": "DQ-PREP-INT-02 [Critical]: Dimension business key / label artist_name must be 100% non-null.",
+      "severity": "critical"
+    },
+    {
+      "type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "genre_name"
+      },
+      "meta": {
+        "rule_id": "DQ-PREP-INT-02",
+        "severity": "Critical"
+      },
+      "notes": "DQ-PREP-INT-02 [Critical]: Dimension business key / label genre_name must be 100% non-null.",
+      "severity": "critical"
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "popularity",
+        "min_value": 0.0,
+        "max_value": 100.0
+      },
+      "meta": {
+        "rule_id": "DQ-PREP-INT-04",
+        "severity": "Critical"
+      },
+      "notes": "DQ-PREP-INT-04 [Critical]: Popularity must be within [0, 100] after transformation.",
+      "severity": "critical"
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "duration_ms",
+        "min_value": 1000.0,
+        "strict_min": true
+      },
+      "meta": {
+        "rule_id": "DQ-PREP-INT-04",
+        "severity": "Critical"
+      },
+      "notes": "DQ-PREP-INT-04 [Critical]: Duration must exceed 1,000 ms after cleaning (no tolerance).",
+      "severity": "critical"
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "danceability",
+        "min_value": 0.0,
+        "max_value": 1.0
+      },
+      "meta": {
+        "rule_id": "DQ-PREP-INT-04",
+        "severity": "Critical"
+      },
+      "notes": "DQ-PREP-INT-04 [Critical]: danceability must be within [0.0, 1.0] after transformation.",
+      "severity": "critical"
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "energy",
+        "min_value": 0.0,
+        "max_value": 1.0
+      },
+      "meta": {
+        "rule_id": "DQ-PREP-INT-04",
+        "severity": "Critical"
+      },
+      "notes": "DQ-PREP-INT-04 [Critical]: energy must be within [0.0, 1.0] after transformation.",
+      "severity": "critical"
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "valence",
+        "min_value": 0.0,
+        "max_value": 1.0
+      },
+      "meta": {
+        "rule_id": "DQ-PREP-INT-04",
+        "severity": "Critical"
+      },
+      "notes": "DQ-PREP-INT-04 [Critical]: valence must be within [0.0, 1.0] after transformation.",
+      "severity": "critical"
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "acousticness",
+        "min_value": 0.0,
+        "max_value": 1.0
+      },
+      "meta": {
+        "rule_id": "DQ-PREP-INT-04",
+        "severity": "Critical"
+      },
+      "notes": "DQ-PREP-INT-04 [Critical]: acousticness must be within [0.0, 1.0] after transformation.",
+      "severity": "critical"
+    },
+    {
+      "type": "expect_compound_columns_to_be_unique",
+      "kwargs": {
+        "column_list": [
+          "track_id_spotify",
+          "genre_name",
+          "award_year",
+          "grammy_category"
+        ]
+      },
+      "meta": {
+        "rule_id": "DQ-PREP-INT-05",
+        "severity": "Critical"
+      },
+      "notes": "DQ-PREP-INT-05 [Critical]: Fact grain (track, genre, award year, category) must be unique.",
+      "severity": "critical"
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "award_year",
+        "row_condition": {
+          "pass_through_filter": "is_grammy_winner==True",
+          "type": "pass_through"
+        },
+        "condition_parser": "pandas",
+        "min_value": 1958.0,
+        "max_value": 2026.0
+      },
+      "meta": {
+        "rule_id": "DQ-PREP-INT-06",
+        "severity": "Critical"
+      },
+      "notes": "DQ-PREP-INT-06 [Critical]: Integration integrity: matched (winner) rows must carry a valid award year.",
+      "severity": "critical"
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "award_count",
+        "row_condition": {
+          "pass_through_filter": "is_grammy_winner==True",
+          "type": "pass_through"
+        },
+        "condition_parser": "pandas",
+        "min_value": 1.0
+      },
+      "meta": {
+        "rule_id": "DQ-PREP-INT-06",
+        "severity": "Critical"
+      },
+      "notes": "DQ-PREP-INT-06 [Critical]: Integration integrity: matched (winner) rows must have award_count >= 1.",
+      "severity": "critical"
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "award_year",
+        "row_condition": {
+          "pass_through_filter": "is_grammy_winner==False",
+          "type": "pass_through"
+        },
+        "condition_parser": "pandas",
+        "min_value": 0.0,
+        "max_value": 0.0
+      },
+      "meta": {
+        "rule_id": "DQ-PREP-INT-06",
+        "severity": "Critical"
+      },
+      "notes": "DQ-PREP-INT-06 [Critical]: Integration integrity: unmatched rows must map to the default year (0).",
+      "severity": "critical"
+    },
+    {
+      "type": "expect_column_distinct_values_to_contain_set",
+      "kwargs": {
+        "column": "is_grammy_winner",
+        "value_set": [
+          true,
+          false
+        ]
+      },
+      "meta": {
+        "rule_id": "DQ-PREP-INT-07",
+        "severity": "Critical"
+      },
+      "notes": "DQ-PREP-INT-07 [Critical]: Analytical readiness: both award tiers must exist (zero matches = broken integration).",
+      "severity": "critical"
+    },
+    {
+      "type": "expect_column_values_to_be_in_set",
+      "kwargs": {
+        "column": "is_grammy_winner",
+        "mostly": 0.95,
+        "value_set": [
+          false
+        ]
+      },
+      "meta": {
+        "rule_id": "DQ-PREP-INT-08",
+        "severity": "Warning"
+      },
+      "notes": "DQ-PREP-INT-08 [Warning]: Match-rate monitor: matched rows must not exceed 5% of the catalog (over-matching risk).",
+      "severity": "critical"
+    },
+    {
+      "type": "expect_column_values_to_be_in_set",
+      "kwargs": {
+        "column": "is_grammy_winner",
+        "value_set": [
+          true,
+          false
+        ]
+      },
+      "meta": {
+        "rule_id": "DQ-PREP-INT-01",
+        "severity": "Informational"
+      },
+      "notes": "DQ-PREP-INT-01 [Informational]: Award recognition flag must be a valid boolean.",
+      "severity": "critical"
+    }
+  ],
+  "meta": {
+    "great_expectations_version": "1.24.0"
+  },
+  "notes": null
+}

@@ -1,0 +1,150 @@
+{
+  "name": "spotify_raw_suite",
+  "expectations": [
+    {
+      "type": "expect_table_columns_to_match_set",
+      "kwargs": {
+        "column_set": [
+          "track_id",
+          "artists",
+          "album_name",
+          "track_name",
+          "popularity",
+          "duration_ms",
+          "explicit",
+          "danceability",
+          "energy",
+          "loudness",
+          "acousticness",
+          "valence",
+          "tempo",
+          "track_genre"
+        ],
+        "exact_match": false
+      },
+      "meta": {
+        "rule_id": "DQ-RAW-SPT-05",
+        "severity": "Critical"
+      },
+      "notes": "DQ-RAW-SPT-05 [Critical]: Source contract: every column required by RQ-01..RQ-03 must be present.",
+      "severity": "critical"
+    },
+    {
+      "type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "track_id"
+      },
+      "meta": {
+        "rule_id": "DQ-RAW-SPT-01",
+        "severity": "Critical"
+      },
+      "notes": "DQ-RAW-SPT-01 [Critical]: Technical track identifier must be 100% non-null.",
+      "severity": "critical"
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "duration_ms",
+        "mostly": 0.999,
+        "min_value": 1000.0,
+        "strict_min": true
+      },
+      "meta": {
+        "rule_id": "DQ-RAW-SPT-02",
+        "severity": "Critical"
+      },
+      "notes": "DQ-RAW-SPT-02 [Critical]: Track duration must exceed 1,000 ms in at least 99.9% of the raw batch.",
+      "severity": "critical"
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "danceability",
+        "min_value": 0.0,
+        "max_value": 1.0
+      },
+      "meta": {
+        "rule_id": "DQ-RAW-SPT-03",
+        "severity": "Critical"
+      },
+      "notes": "DQ-RAW-SPT-03 [Critical]: danceability must be within the normalized range [0.0, 1.0].",
+      "severity": "critical"
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "energy",
+        "min_value": 0.0,
+        "max_value": 1.0
+      },
+      "meta": {
+        "rule_id": "DQ-RAW-SPT-03",
+        "severity": "Critical"
+      },
+      "notes": "DQ-RAW-SPT-03 [Critical]: energy must be within the normalized range [0.0, 1.0].",
+      "severity": "critical"
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "valence",
+        "min_value": 0.0,
+        "max_value": 1.0
+      },
+      "meta": {
+        "rule_id": "DQ-RAW-SPT-03",
+        "severity": "Critical"
+      },
+      "notes": "DQ-RAW-SPT-03 [Critical]: valence must be within the normalized range [0.0, 1.0].",
+      "severity": "critical"
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "acousticness",
+        "min_value": 0.0,
+        "max_value": 1.0
+      },
+      "meta": {
+        "rule_id": "DQ-RAW-SPT-03",
+        "severity": "Critical"
+      },
+      "notes": "DQ-RAW-SPT-03 [Critical]: acousticness must be within the normalized range [0.0, 1.0].",
+      "severity": "critical"
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "popularity",
+        "min_value": 0.0,
+        "max_value": 100.0
+      },
+      "meta": {
+        "rule_id": "DQ-RAW-SPT-04",
+        "severity": "Critical"
+      },
+      "notes": "DQ-RAW-SPT-04 [Critical]: Popularity must be within the integer range [0, 100].",
+      "severity": "critical"
+    },
+    {
+      "type": "expect_compound_columns_to_be_unique",
+      "kwargs": {
+        "column_list": [
+          "track_id",
+          "track_genre"
+        ],
+        "mostly": 0.99
+      },
+      "meta": {
+        "rule_id": "DQ-RAW-SPT-06",
+        "severity": "Warning"
+      },
+      "notes": "DQ-RAW-SPT-06 [Warning]: (track_id, track_genre) duplicates must not exceed 1% of the batch (profiling: 450 = 0.39%).",
+      "severity": "critical"
+    }
+  ],
+  "meta": {
+    "great_expectations_version": "1.24.0"
+  },
+  "notes": null
+}

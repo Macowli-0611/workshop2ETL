@@ -1,0 +1,8 @@
+dag_id                  | logical_date | task_id                 | state   | start_date                       | end_date                        
+reliable_music_pipeline |              | extract_spotify         | success | 2026-10-12T00:29:01.423653+00:00 | 2026-10-12T00:29:03.671315+00:00
+reliable_music_pipeline |              | validate_spotify_raw    | success | 2026-10-12T00:29:04.603850+00:00 | 2026-10-12T00:29:19.092593+00:00
+reliable_music_pipeline |              | extract_grammys         | success | 2026-10-12T00:29:30.627218+00:00 | 2026-10-12T00:29:32.479248+00:00
+reliable_music_pipeline |              | validate_grammys_raw    | success | 2026-10-12T00:29:32.879087+00:00 | 2026-10-12T00:29:38.259847+00:00
+reliable_music_pipeline |              | transform_and_integrate | success | 2026-10-12T00:29:38.849776+00:00 | 2026-10-12T00:29:42.715075+00:00
+reliable_music_pipeline |              | validate_prepared       | success | 2026-10-12T00:29:43.348630+00:00 | 2026-10-12T00:29:49.287671+00:00
+reliable_music_pipeline |              | load_dw                 | success | 2026-10-12T00:29:49.416401+00:00 | 2026-10-12T00:30:13.509141+00:00

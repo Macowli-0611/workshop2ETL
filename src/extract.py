@@ -78,13 +78,13 @@ if __name__ == "__main__":
     from dotenv import load_dotenv
     load_dotenv()
 
-    db_user = os.getenv("POSTGRES_USER", "postgres")
-    db_pass = os.getenv("POSTGRES_PASSWORD", "postgres_secure_password")
+    db_user = os.environ["POSTGRES_USER"]
+    db_pass = os.environ["POSTGRES_PASSWORD"]
     db_host = os.getenv("POSTGRES_HOST", "localhost")
     db_port = os.getenv("POSTGRES_PORT", "5432")
     db_name = os.getenv("SOURCE_DB_NAME", "source_music_db")
     db_url = f"postgresql://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}"
 
-    out_s = extract_spotify("spotify_dataset.csv", "data/staging/spotify_raw.parquet")
+    out_s = extract_spotify("data/spotify_dataset.csv", "data/staging/spotify_raw.parquet")
     out_g = extract_grammys(db_url, "data/staging/grammys_raw.parquet")
     print(f"Staging artifacts generated:\n- {out_s}\n- {out_g}")

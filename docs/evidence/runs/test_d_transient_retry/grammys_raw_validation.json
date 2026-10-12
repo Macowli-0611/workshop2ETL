@@ -1,0 +1,97 @@
+{
+  "gate": "grammys_raw",
+  "suite": "grammys_raw_suite",
+  "validation_definition": "grammys_raw_validation_definition",
+  "checkpoint": "grammys_raw_checkpoint",
+  "evaluated_at": "2026-10-12T00:29:38.191226+00:00",
+  "batch_context": {
+    "run_id": "test_d_transient_retry",
+    "source": "source_music_db.grammy_awards"
+  },
+  "total_records": 4810,
+  "gx_success": true,
+  "gate_decision": "CONTINUE",
+  "summary": {
+    "expectations_evaluated": 4,
+    "expectations_passed": 4,
+    "critical_failures": [],
+    "warning_failures": [],
+    "informational_failures": []
+  },
+  "rules_evaluated": [
+    {
+      "rule_id": "DQ-RAW-GRM-03",
+      "severity": "Critical",
+      "expectation_type": "expect_table_columns_to_match_set",
+      "target": "table",
+      "description": "DQ-RAW-GRM-03 [Critical]: Source contract: every column required by the integration must be present.",
+      "success": true,
+      "element_count": null,
+      "unexpected_count": null,
+      "unexpected_percent": null,
+      "partial_unexpected_list": null,
+      "observed_value": [
+        "artist",
+        "category",
+        "img",
+        "nominee",
+        "published_at",
+        "title",
+        "updated_at",
+        "winner",
+        "workers",
+        "year"
+      ],
+      "exception": null
+    },
+    {
+      "rule_id": "DQ-RAW-GRM-04",
+      "severity": "Informational",
+      "expectation_type": "expect_table_row_count_to_be_between",
+      "target": "table",
+      "description": "DQ-RAW-GRM-04 [Informational]: Source volume monitor: expected 4,000-10,000 award rows per extraction.",
+      "success": true,
+      "element_count": null,
+      "unexpected_count": null,
+      "unexpected_percent": null,
+      "partial_unexpected_list": null,
+      "observed_value": 4810,
+      "exception": null
+    },
+    {
+      "rule_id": "DQ-RAW-GRM-01",
+      "severity": "Critical",
+      "expectation_type": "expect_column_values_to_be_between",
+      "target": "year",
+      "description": "DQ-RAW-GRM-01 [Critical]: Award year must fall within the Recording Academy range [1958, 2026].",
+      "success": true,
+      "element_count": 4810,
+      "unexpected_count": 0,
+      "unexpected_percent": 0.0,
+      "partial_unexpected_list": [],
+      "observed_value": null,
+      "exception": null
+    },
+    {
+      "rule_id": "DQ-RAW-GRM-02",
+      "severity": "Warning",
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "target": "nominee",
+      "description": "DQ-RAW-GRM-02 [Warning]: Nominee title must be populated in at least 99.5% of raw records.",
+      "success": true,
+      "element_count": 4810,
+      "unexpected_count": 6,
+      "unexpected_percent": 0.12474012474012475,
+      "partial_unexpected_list": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "observed_value": null,
+      "exception": null
+    }
+  ]
+}

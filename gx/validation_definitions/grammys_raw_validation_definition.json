@@ -1,0 +1,12 @@
+{
+  "name": "grammys_raw_validation_definition",
+  "data": {
+    "data_source": "grammys_raw_source",
+    "data_asset": "grammys_raw_asset",
+    "batch_definition": "grammys_raw_batch",
+    "batch_parameters": {
+      "dataframe": "<staging parquet of the current DAG run>"
+    }
+  },
+  "suite": "grammys_raw_suite"
+}

@@ -1,0 +1,70 @@
+{
+  "name": "grammys_raw_suite",
+  "expectations": [
+    {
+      "type": "expect_table_columns_to_match_set",
+      "kwargs": {
+        "column_set": [
+          "year",
+          "title",
+          "category",
+          "nominee",
+          "artist",
+          "workers",
+          "winner"
+        ],
+        "exact_match": false
+      },
+      "meta": {
+        "rule_id": "DQ-RAW-GRM-03",
+        "severity": "Critical"
+      },
+      "notes": "DQ-RAW-GRM-03 [Critical]: Source contract: every column required by the integration must be present.",
+      "severity": "critical"
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "year",
+        "min_value": 1958.0,
+        "max_value": 2026.0
+      },
+      "meta": {
+        "rule_id": "DQ-RAW-GRM-01",
+        "severity": "Critical"
+      },
+      "notes": "DQ-RAW-GRM-01 [Critical]: Award year must fall within the Recording Academy range [1958, 2026].",
+      "severity": "critical"
+    },
+    {
+      "type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "nominee",
+        "mostly": 0.995
+      },
+      "meta": {
+        "rule_id": "DQ-RAW-GRM-02",
+        "severity": "Warning"
+      },
+      "notes": "DQ-RAW-GRM-02 [Warning]: Nominee title must be populated in at least 99.5% of raw records.",
+      "severity": "critical"
+    },
+    {
+      "type": "expect_table_row_count_to_be_between",
+      "kwargs": {
+        "min_value": 4000,
+        "max_value": 10000
+      },
+      "meta": {
+        "rule_id": "DQ-RAW-GRM-04",
+        "severity": "Informational"
+      },
+      "notes": "DQ-RAW-GRM-04 [Informational]: Source volume monitor: expected 4,000-10,000 award rows per extraction.",
+      "severity": "critical"
+    }
+  ],
+  "meta": {
+    "great_expectations_version": "1.24.0"
+  },
+  "notes": null
+}

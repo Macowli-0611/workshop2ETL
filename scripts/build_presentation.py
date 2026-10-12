@@ -1,8 +1,7 @@
 """
 Build script to generate a standalone, professional HTML presentation deck for Workshop-2 Defense.
 Embeds all charts as Base64 data URIs and outputs:
-- /Users/usuario/Desktop/WorkShop2ETL/presentation.html
-- /Users/usuario/Desktop/WorkShop2ETL/docs/presentation.html
+- docs/presentation.html
 """
 import base64
 import os
@@ -14,9 +13,9 @@ def get_base64_image(image_path: str) -> str:
 
 def build_deck():
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    kpi1_b64 = get_base64_image(os.path.join(base_dir, "docs", "evidence", "kpi1_audio_profile.png"))
-    kpi2_b64 = get_base64_image(os.path.join(base_dir, "docs", "evidence", "kpi2_genre_popularity.png"))
-    kpi3_b64 = get_base64_image(os.path.join(base_dir, "docs", "evidence", "kpi3_temporal_trends.png"))
+    kpi1_b64 = get_base64_image(os.path.join(base_dir, "docs", "evidence", "kpi", "kpi1_audio_profile.png"))
+    kpi2_b64 = get_base64_image(os.path.join(base_dir, "docs", "evidence", "kpi", "kpi2_genre_uplift.png"))
+    kpi3_b64 = get_base64_image(os.path.join(base_dir, "docs", "evidence", "kpi", "kpi3_decade_trends.png"))
 
     html_content = f"""<!DOCTYPE html>
 <html lang="en">
@@ -825,7 +824,7 @@ def build_deck():
 <ul>
   <li><strong>RQ-01:</strong> Differentiates acoustic fingerprints of winners vs catalog tracks.</li>
   <li><strong>RQ-02:</strong> Measures the commercial uplift across genres (Soul +45.6 pts, Country +23.6 pts).</li>
-  <li><strong>RQ-03:</strong> Analyzes temporal shifts in collaborations (rising to 44.27%) and explicit lyrics (rising to 15.27%).</li>
+  <li><strong>RQ-03:</strong> Analyzes temporal shifts in collaborations (35.71% in the 2010s) and explicit lyrics (rising to 20.24%).</li>
 </ul>
 ">
       <div class="slide-header">
@@ -1010,13 +1009,13 @@ def build_deck():
             <div class="arch-node" style="border-color: var(--accent-emerald);">
               <span class="badge badge-emerald" style="width: fit-content; margin: 0 auto;">Raw Quality Gate 1</span>
               <span class="arch-node-title">validate_spotify_raw</span>
-              <span class="arch-node-sub">Great Expectations: DQ-RAW-SPT-01..04</span>
+              <span class="arch-node-sub">Great Expectations: DQ-RAW-SPT-01..06</span>
             </div>
             <div style="width: 80px;"></div>
             <div class="arch-node" style="border-color: var(--accent-emerald);">
               <span class="badge badge-emerald" style="width: fit-content; margin: 0 auto;">Raw Quality Gate 2</span>
               <span class="arch-node-title">validate_grammys_raw</span>
-              <span class="arch-node-sub">Great Expectations: DQ-RAW-GRM-01..02</span>
+              <span class="arch-node-sub">Great Expectations: DQ-RAW-GRM-01..04</span>
             </div>
           </div>
 
@@ -1044,7 +1043,7 @@ def build_deck():
             <div class="arch-node" style="border-color: var(--accent-amber); min-width: 420px;">
               <span class="badge badge-amber" style="width: fit-content; margin: 0 auto;">Prepared Quality Gate & DW Upsert</span>
               <span class="arch-node-title">validate_prepared ➔ load_dw</span>
-              <span class="arch-node-sub">GX DQ-PREP-INT-01..02 ➔ dw_music_analytics (Star Schema ON CONFLICT DO UPDATE)</span>
+              <span class="arch-node-sub">GX DQ-PREP-INT-01..08 ➔ dw_music_analytics (Star Schema ON CONFLICT DO UPDATE)</span>
             </div>
           </div>
         </div>
@@ -1056,11 +1055,11 @@ def build_deck():
     <!-- ============================================================== -->
     <section class="slide" data-notes="
 <p><strong>Script:</strong></p>
-<p>'Section 6.5 requires at least six rules mapped to explicit severities. We designed eight rules in Great Expectations across Raw and Prepared gates. Critical severities halt the pipeline immediately without retrying. Warning severities log actionable diagnostic audit trails without blocking execution.'</p>
+<p>'Section 6.5 requires at least six rules mapped to explicit severities. We designed 18 rules in Great Expectations across two raw gates and the prepared gate, each run through a Suite, a Validation Definition and a Checkpoint. Critical severities halt the pipeline immediately without retrying. Warning severities log actionable diagnostic audit trails without blocking execution.'</p>
 <div class='notes-section-title'>Operational Quality Policies</div>
 <ul>
   <li><strong>Critical Rules:</strong> Non-null track IDs, duration > 1,000ms (99.9% tolerance in raw), valid Grammy years [1958-2026], and audio bounds [0.0, 1.0].</li>
-  <li><strong>Warning Rules:</strong> Grammy nominee completeness (tolerates 1,840 null artists from classical/producer categories).</li>
+  <li><strong>Warning Rules:</strong> Grammy nominee completeness (6 nulls), Spotify (track, genre) duplicates below 1%, match rate below 5%.</li>
   <li><strong>Audit Trails:</strong> Machine-readable JSON logs preserved in <code>gx/results/</code>.</li>
 </ul>
 ">
@@ -1068,7 +1067,7 @@ def build_deck():
         <div>
           <div class="slide-tag">Section 6.5 & 6.6 • Quality Engineering</div>
           <h2 class="slide-title">Great Expectations Validation Gates</h2>
-          <p class="slide-subtitle">Eight formal quality rules structured across Raw and Prepared gates with operational severity policies.</p>
+          <p class="slide-subtitle">18 quality rules (13 Critical, 3 Warning, 2 Informational) across Raw and Prepared gates.</p>
         </div>
         <div class="rubric-pill">Rubric: Sec 10.1 GX Validation (0.80 pts)</div>
       </div>
@@ -1087,68 +1086,92 @@ def build_deck():
           </thead>
           <tbody>
             <tr>
+              <td><strong class="code-accent">DQ-RAW-SPT-05 · GRM-03 · PREP-INT-03</strong></td>
+              <td>All gates</td>
+              <td>schema</td>
+              <td>Conformity</td>
+              <td><span class="badge badge-rose">Critical</span></td>
+              <td>Required columns present / exact load contract (<code>expect_table_columns_to_match_set</code>)</td>
+            </tr>
+            <tr>
               <td><strong class="code-accent">DQ-RAW-SPT-01</strong></td>
               <td>Spotify Raw</td>
               <td><code>track_id</code></td>
-              <td>Uniqueness / Completeness</td>
+              <td>Completeness</td>
               <td><span class="badge badge-rose">Critical</span></td>
-              <td>100% non-null (<code>expect_column_values_to_not_be_null</code>)</td>
+              <td>100% non-null</td>
             </tr>
             <tr>
               <td><strong class="code-accent">DQ-RAW-SPT-02</strong></td>
               <td>Spotify Raw</td>
               <td><code>duration_ms</code></td>
-              <td>Physical Validity</td>
+              <td>Validity</td>
               <td><span class="badge badge-rose">Critical</span></td>
-              <td>$\ge 99.9\%$ exceeding 1,000 ms (filters corrupted row 65,900)</td>
+              <td>&gt; 1,000 ms in &ge; 99.9% (1 corrupted row found)</td>
             </tr>
             <tr>
-              <td><strong class="code-accent">DQ-RAW-SPT-03</strong></td>
+              <td><strong class="code-accent">DQ-RAW-SPT-03 · 04</strong></td>
               <td>Spotify Raw</td>
-              <td><code>danceability, energy</code></td>
-              <td>Range Boundary</td>
+              <td>4 audio features · popularity</td>
+              <td>Range</td>
               <td><span class="badge badge-rose">Critical</span></td>
-              <td>100% within $[0.0, 1.0]$ bounds</td>
+              <td>[0, 1] and [0, 100], 100%</td>
             </tr>
             <tr>
-              <td><strong class="code-accent">DQ-RAW-SPT-04</strong></td>
+              <td><strong class="code-accent">DQ-RAW-SPT-06</strong></td>
               <td>Spotify Raw</td>
-              <td><code>popularity</code></td>
-              <td>Distribution</td>
-              <td><span class="badge badge-cyan">Informational</span></td>
-              <td>Mean popularity within $[20, 50]$</td>
+              <td>(track_id, track_genre)</td>
+              <td>Uniqueness</td>
+              <td><span class="badge badge-amber">Warning</span></td>
+              <td>&ge; 99% unique (450 dups = 0.39%, removed by TR-03)</td>
             </tr>
             <tr>
               <td><strong class="code-accent">DQ-RAW-GRM-01</strong></td>
               <td>Grammys Raw</td>
               <td><code>year</code></td>
-              <td>Temporal Validity</td>
+              <td>Temporal validity</td>
               <td><span class="badge badge-rose">Critical</span></td>
-              <td>100% within historical Academy range $[1958, 2026]$</td>
+              <td>[1958, 2026], 100% &mdash; <strong>Test B</strong></td>
             </tr>
             <tr>
-              <td><strong class="code-accent">DQ-RAW-GRM-02</strong></td>
+              <td><strong class="code-accent">DQ-RAW-GRM-02 · 04</strong></td>
               <td>Grammys Raw</td>
-              <td><code>nominee</code></td>
-              <td>Completeness</td>
-              <td><span class="badge badge-amber">Warning</span></td>
-              <td>$\ge 99.5\%$ non-null (tolerates classical category credits)</td>
+              <td><code>nominee</code> · row count</td>
+              <td>Completeness · Volume</td>
+              <td><span class="badge badge-amber">Warning / Info</span></td>
+              <td>&ge; 99.5% non-null · 4,000&ndash;10,000 rows</td>
             </tr>
             <tr>
-              <td><strong class="code-accent">DQ-PREP-INT-01</strong></td>
-              <td>Prepared Gate</td>
+              <td><strong class="code-accent">DQ-PREP-INT-02 · 04</strong></td>
+              <td>Prepared</td>
+              <td>keys · ranges</td>
+              <td>Completeness · Validity</td>
+              <td><span class="badge badge-rose">Critical</span></td>
+              <td>Keys non-null; ranges hold after transform (no tolerance)</td>
+            </tr>
+            <tr>
+              <td><strong class="code-accent">DQ-PREP-INT-05</strong></td>
+              <td>Prepared</td>
+              <td>fact grain</td>
+              <td>Uniqueness</td>
+              <td><span class="badge badge-rose">Critical</span></td>
+              <td>(track, genre, year, category) unique</td>
+            </tr>
+            <tr>
+              <td><strong class="code-accent">DQ-PREP-INT-06 · 07</strong></td>
+              <td>Prepared</td>
+              <td>award fields</td>
+              <td>Integration integrity</td>
+              <td><span class="badge badge-rose">Critical</span></td>
+              <td>Matched &rArr; valid year &amp; award_count &ge; 1; unmatched &rArr; year 0; both tiers exist</td>
+            </tr>
+            <tr>
+              <td><strong class="code-accent">DQ-PREP-INT-08 · 01</strong></td>
+              <td>Prepared</td>
               <td><code>is_grammy_winner</code></td>
-              <td>Domain Validity</td>
-              <td><span class="badge badge-rose">Critical</span></td>
-              <td>100% boolean (True/False only)</td>
-            </tr>
-            <tr>
-              <td><strong class="code-accent">DQ-PREP-INT-02</strong></td>
-              <td>Prepared Gate</td>
-              <td><code>track_id, track_name</code></td>
-              <td>Referential Integrity</td>
-              <td><span class="badge badge-rose">Critical</span></td>
-              <td>100% non-null before loading into PostgreSQL Data Warehouse</td>
+              <td>Plausibility · Domain</td>
+              <td><span class="badge badge-amber">Warning / Info</span></td>
+              <td>Match rate &le; 5% (observed 0.42%) · boolean</td>
             </tr>
           </tbody>
         </table>
@@ -1518,7 +1541,7 @@ def build_deck():
     <!-- ============================================================== -->
     <section class="slide" data-notes="
 <p><strong>Script:</strong></p>
-<p>'Test C satisfies Section 7.3: Repeatability and Safe Rerun. We ran the exact same batch twice. Before rerun: 113,549 rows. After rerun: exactly 113,549 rows. Popularity sum: 3,778,820 before and after. This proves our composite grain unique constraint and ON CONFLICT DO UPDATE upsert completely prevents silent duplication.'</p>
+<p>'Test C satisfies Section 7.3: Repeatability and Safe Rerun. We ran the exact same batch twice. Before rerun: 113,549 rows. After rerun: exactly 113,549 rows. Popularity sum: 3,783,956 before and after; 0 inserted, 113,549 updated. This proves our composite grain unique constraint and ON CONFLICT DO UPDATE upsert completely prevents silent duplication.'</p>
 <div class='notes-section-title'>Mathematical Verification</div>
 <ul>
   <li>Fact table net discrepancy: exactly 0 rows.</li>
@@ -1548,7 +1571,7 @@ def build_deck():
               <tr><td>Awarded Tracks (Winners)</td><td>475</td><td>475</td><td><strong class="code-success">0 (Exact)</strong></td></tr>
               <tr><td><code>dim_artist</code> Records</td><td>17,645</td><td>17,645</td><td><strong class="code-success">0 (Exact)</strong></td></tr>
               <tr><td><code>dim_track</code> Records</td><td>89,740</td><td>89,740</td><td><strong class="code-success">0 (Exact)</strong></td></tr>
-              <tr><td>Sum of <code>popularity</code></td><td>3,778,820</td><td>3,778,820</td><td><strong class="code-success">0.0 (Invariant)</strong></td></tr>
+              <tr><td>Sum of <code>popularity</code></td><td>3,783,956</td><td>3,783,956</td><td><strong class="code-success">0.0 (Invariant)</strong></td></tr>
               <tr><td>Mean of <code>danceability</code></td><td>0.5670</td><td>0.5670</td><td><strong class="code-success">0.0 (Invariant)</strong></td></tr>
             </table>
           </div>
@@ -1584,7 +1607,7 @@ def build_deck():
     <!-- ============================================================== -->
     <section class="slide" data-notes="
 <p><strong>Script:</strong></p>
-<p>'Section 8.1 requires at least 3 KPIs and 3 visualizations querying the DW directly. Direct CSV connections were avoided. KPI 1 shows Grammy winners have higher Valence (0.53 vs 0.47) and +9.6 popularity points. KPI 2 shows Soul and Country have the highest popularity multiplier (+45.6 and +23.6 pts). KPI 3 shows explicit lyrics rose from 0% pre-1990 to 15.27% in the 2010s, with collaborations hitting 44.27%.'</p>
+<p>'Section 8.1 requires at least 3 KPIs and 3 visualizations querying the DW directly. Direct CSV connections were avoided. KPI 1 shows Grammy winners have higher Valence (0.53 vs 0.47) and +12.04 popularity points (282 distinct awarded tracks). KPI 2 shows Soul and Country have the highest popularity multiplier (+45.6 and +23.6 pts). KPI 3 shows explicit lyrics rose from 0% pre-1990 to 20.24% in the 2010s, with collaborations hitting 35.71%.'</p>
 <div class='notes-section-title'>Key Analytical Insights</div>
 <ul>
   <li>KPI 1: Winners are systematically more energetic, cheerful, and popular.</li>
@@ -1611,7 +1634,7 @@ def build_deck():
             <img src="{kpi1_b64}" alt="KPI 1 Audio Profile">
           </div>
           <p style="font-size: 0.74rem; color: #cbd5e1; margin-top: 4px;">
-            <strong>Insight:</strong> Winners feature higher <strong>Valence (0.53 vs 0.47)</strong>, higher <strong>Energy (0.68 vs 0.64)</strong>, and +9.6 popularity points.
+            <strong>Insight:</strong> Winners feature higher <strong>Valence (0.53 vs 0.47)</strong>, lower <strong>Acousticness (0.26 vs 0.33)</strong>, and +12.04 popularity points (282 distinct awarded tracks).
           </p>
         </div>
 
@@ -1637,7 +1660,7 @@ def build_deck():
             <img src="{kpi3_b64}" alt="KPI 3 Historical Trends">
           </div>
           <p style="font-size: 0.74rem; color: #cbd5e1; margin-top: 4px;">
-            <strong>Insight:</strong> Explicit content in winning songs rose from 0% (pre-1990) to <strong>15.27%</strong> in the 2010s; collaborations reached <strong>44.27%</strong>.
+            <strong>Insight:</strong> Explicit content in winning songs rose from 0% (pre-1990) to <strong>20.24%</strong> in the 2010s; collaborations reached <strong>35.71%</strong>.
           </p>
         </div>
       </div>
@@ -1756,8 +1779,8 @@ def build_deck():
               <li><strong>Requirements & Architecture (0.40):</strong> RQ-01..03, full end-to-end traceability documented.</li>
               <li><strong>Data Profiling & Risks (0.60):</strong> 7 categories covered in reproducible notebook.</li>
               <li><strong>Transformation & Integration (0.60):</strong> Relational Grammy extraction & formal contract.</li>
-              <li><strong>Great Expectations Validation (0.80):</strong> 8 rules, 2 gates, machine-readable JSON logs.</li>
-              <li><strong>Airflow 3.1.8 Orchestration (0.90):</strong> TaskFlow API, selective retries, Tests A, B, and C verified.</li>
+              <li><strong>Great Expectations Validation (0.80):</strong> 18 rules, 3 gates (Suite + Validation Definition + Checkpoint), per-run JSON results.</li>
+              <li><strong>Airflow 3.1.8 Orchestration (0.90):</strong> TaskFlow API, selective retries, Tests A, B, C and D (retry) verified.</li>
               <li><strong>Dimensional DW & Analytics (0.40):</strong> PostgreSQL Star Schema & 3 visual KPIs.</li>
               <li><strong>Repository & Documentation (0.30):</strong> All 16 README sections, zero secret leaks.</li>
             </ul>
@@ -2001,12 +2024,7 @@ def build_deck():
 </html>
 """
 
-    root_path = os.path.join(base_dir, "presentation.html")
     docs_path = os.path.join(base_dir, "docs", "presentation.html")
-
-    with open(root_path, "w", encoding="utf-8") as f:
-        f.write(html_content)
-    print(f"✅ Generated {root_path} ({len(html_content)} bytes)")
 
     with open(docs_path, "w", encoding="utf-8") as f:
         f.write(html_content)

@@ -1,0 +1,12 @@
+-- 2026-10-12T00:28:54Z cleanup: the source again mirrors the provided CSV
+  id  | year 
+------+------
+ 4811 | 1800
+(1 row)
+
+DELETE 1
+ rows_after_cleanup 
+--------------------
+               4810
+(1 row)
+

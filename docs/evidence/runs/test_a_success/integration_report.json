@@ -1,0 +1,37 @@
+{
+  "spotify": {
+    "raw_rows": 114000,
+    "removed_null_metadata_TR01": 1,
+    "removed_invalid_duration_TR02": 0,
+    "removed_duplicate_track_genre_TR03": 450,
+    "clean_rows": 113549,
+    "distinct_tracks": 89740
+  },
+  "grammys": {
+    "raw_rows": 4810,
+    "removed_null_nominee_TR06": 6,
+    "rows_used_for_matching": 4804,
+    "distinct_match_keys_TR07": 4438,
+    "keys_with_multiple_awards": 286
+  },
+  "integration": {
+    "join": "LEFT JOIN spotify -> grammy_agg ON (clean_track_name, clean_primary_artist)",
+    "declared_cardinality": "many-to-one (validated by pandas merge validate='many_to_one')",
+    "matched_spotify_rows": 475,
+    "match_rate_rows_pct": 0.418,
+    "distinct_matched_tracks": 282,
+    "matched_grammy_keys": 181,
+    "unmatched_grammy_keys": 4257,
+    "unmatched_grammy_keys_pct": 95.92,
+    "keys_matching_more_than_one_track_id": 49,
+    "max_track_ids_per_key": 9,
+    "duplicate_matches_per_spotify_row": 0
+  },
+  "prepared": {
+    "rows": 113549,
+    "removed_grain_duplicates_TR11": 0
+  },
+  "reconciliation": {
+    "spotify_clean_rows_equal_prepared_rows": true
+  }
+}

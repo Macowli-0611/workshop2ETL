@@ -1,0 +1,5 @@
+== 2026-10-12T00:28:54Z source_music_db stops accepting new connections (simulated outage)
+ALTER DATABASE
+== 2026-10-12T00:29:12Z extract_grammys attempt 1 failed -> up_for_retry; connections restored
+ALTER DATABASE
+== 2026-10-12T00:30:26Z DAG run state: success

@@ -1,38 +1,37 @@
-# Analytical Requirements & Solution Scope Document (Phase 0)
-**Workshop-2: Building a Reliable Batch Data Pipeline**
-*Course: ETL (G01) — Faculty of Engineering and Basic Sciences*  
-*Autonomous University of the West (UAO)*
+# Analytical Requirements & Solution Scope
 
----
+Section 6.1 of the brief. The requirement IDs (RQ-01..RQ-03) are used consistently in the rules (`DQ-*`), transformations (`TR-*`), DW views and KPIs. See [traceability_matrix.md](traceability_matrix.md).
 
-## 1. Scope Statement
-The objective of this engineering solution is to design and implement a reliable, idempotent batch data pipeline that integrates two decoupled, heterogeneous sources: digital music catalog and audio characteristics from **Spotify** (`spotify_dataset.csv`) and the historical archive of honors and awards from the **Grammy Awards** (`the_grammy_awards.csv`, hosted in an operational PostgreSQL relational database).
+## 1. Scope statement
 
-The resulting dimensional Data Warehouse empowers music industry analysts, executive producers, and Artists and Repertoire (A&R) directors to evaluate the empirical correlation between formal institutional recognition (Grammys) and digital commercial consumption and sound profile on streaming platforms.
+The solution builds a reliable batch pipeline that integrates the **Spotify catalog** (114,000 track–genre rows with audio features and popularity, CSV file source) with the **Grammy Awards** history (4,810 award records, 1958–2019, extracted from the PostgreSQL source database `source_music_db`). It produces a trusted star-schema Data Warehouse (`dw_music_analytics`) and a BI dashboard.
 
----
+The data product supports music analysts and A&R teams who want to compare **institutional recognition** (Grammy wins) with **listener consumption and sound profile** (Spotify). Out of scope: real-time ingestion, fuzzy or ML-based title matching, and causal claims (Spotify popularity is a single snapshot).
 
-## 2. Analytical Requirements Matrix (Section 6.1 of the Brief)
+## 2. Analytical requirements
 
-| ID | Analytical Requirement | Business Question / Decision Supported | Required Attributes | Source(s) | Expected KPI(s) | Required Level of Detail (Grain) |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **RQ-01** | **Acoustic & Perceptual Profile of Awarded vs. Non-Awarded Tracks** | Do specific audio features (Danceability, Energy, Valence, Acousticness) distinguish Grammy-winning and nominated songs from standard catalog tracks? *Decision: Guide production choices and repertoire curation for awards consideration.* | `track_name`, `artists`, `danceability`, `energy`, `valence`, `acousticness`, `tempo`, `nominee`, `artist`, `winner`, `category`, `year` | **Spotify:** Audio features & metadata.<br>**Grammys:** Category, award status, year. | **KPI 1.1:** Acoustic Differential Ratio (Winner vs. Catalog).<br>**KPI 1.2:** Audio Feature Fingerprint by Award Tier. | Individual audio track (`track_id`), award edition year, and category. |
-| **RQ-02** | **Impact of Grammy Acclaim on Popularity Multiplier Across Genres** | How does the distribution of Spotify popularity vary between Grammy winners, nominees, and non-awarded tracks across musical genres? *Decision: Budget allocation for genre marketing and post-nomination promotional spend.* | `track_genre`, `popularity`, `track_name`, `artists`, `nominee`, `artist`, `winner`, `category` | **Spotify:** `track_genre`, `popularity`.<br>**Grammys:** `category`, `winner`. | **KPI 2.1:** Mean Popularity by Award Tier.<br>**KPI 2.2:** Genre Popularity Uplift Delta (Winners vs. General Catalog). | Musical genre (`track_genre`) and award acclaim tier. |
-| **RQ-03** | **Historical Evolution of Collaborations and Explicit Content in Awarded Music** | How has the proportion of awarded songs featuring multiple credited artists (collaborations) and explicit lyrical content evolved over decades compared to streaming catalog trends? *Decision: Editorial guidelines and collaboration investments.* | `year`, `explicit`, `artists`, `artist`, `workers`, `winner`, `category`, `nominee` | **Spotify:** `explicit`, credited artist list.<br>**Grammys:** Edition year, category, credits. | **KPI 3.1:** Awarded Explicit Content Share Rate (% winners with `explicit = True` by decade).<br>**KPI 3.2:** Awarded Collaboration Ratio (% tracks with $\ge 2$ credited artists). | Award decade and edition year. |
+| ID | Analytical requirement (question / decision supported) | Required data and source of each attribute | Expected KPI(s) | Required level of detail |
+| :--- | :--- | :--- | :--- | :--- |
+| **RQ-01** | *Do Grammy-winning tracks have a different audio profile and popularity than the rest of the catalog?* Decision: which sound characteristics to prioritize in repertoire aimed at awards. | **Spotify:** `track_id`, `track_name`, `artists`, `danceability`, `energy`, `valence`, `acousticness`, `popularity`. **Grammys:** `nominee`, `artist`, `winner`. | **KPI-01** mean audio features and mean popularity for winners vs catalog; popularity uplift (winner mean − catalog mean). | Distinct track (winner flag); comparison by award status. |
+| **RQ-02** | *In which genres is Grammy recognition associated with the largest popularity uplift?* Decision: where post-award promotion budget has the highest expected return. | **Spotify:** `track_genre`, `popularity`, `track_id`. **Grammys:** `nominee`, `artist`, `winner`. | **KPI-02** popularity uplift per genre (winner mean − catalog mean), with the number of awarded tracks per genre (≥ 5 to be compared). | Track × genre. |
+| **RQ-03** | *How have explicit content and collaborations evolved among awarded tracks across decades?* Decision: editorial and collaboration strategy. | **Spotify:** `explicit`, `artists` (credited artist list → Solo/Collaboration). **Grammys:** `year`, `nominee`, `artist`, `winner`. | **KPI-03** % explicit and % collaborations among distinct awarded tracks per award decade. | Distinct awarded track × award decade. |
 
----
+## 3. Why both sources are necessary
 
-## 3. Justification for Cross-Source Integration
-Neither dataset can satisfy these analytical needs independently:
-1. **Spotify** provides fine-grained perceptual signal processing attributes (`danceability`, `energy`, `acousticness`) and real-world digital streaming telemetry (`popularity`), but lacks critical historical industry prestige, nomination records, and awards data.
-2. **Grammy Awards** records the definitive 60+ year historical archive of Recording Academy accolades (since 1958), but contains zero digital consumption telemetry, audio signal features, or modern streaming genre classifications.
+- **Spotify alone** has audio features, popularity, genre, explicit flag and credited artists, but no record of institutional recognition. It cannot tell which tracks won a Grammy, nor when.
+- **Grammys alone** has the award, its year and category, but no audio profile, popularity, genre or explicit flag.
+- Each KPI combines an attribute that exists only in Spotify (features, popularity, genre, explicit, collaborations) with one that exists only in the Grammys (winner status, award year). The integration contract ([integration_contract.md](integration_contract.md)) joins them on the normalized (title, primary artist) key.
 
-Unifying both sources through a formal Integration Contract establishes a novel analytical asset correlating institutional artistic acclaim with digital listener consumption patterns.
+## 4. Known data limitations that shape the requirements
 
----
+- The Grammy file contains **only winners** (4,810/4,810 `winner = True`), so the requirements compare *winners vs catalog*, not nominees.
+- Coverage of the match is low by nature (non-song categories, 38% of awards without artist, partial Spotify sample). It is measured on every run (integration report) and the KPIs report their sample sizes.
+- Award years end in 2019; decade trends end in the 2010s.
 
-## 4. End-to-End Traceability Chain
-Every downstream engineering decision traces back directly to these requirements:
-* **Profiling Phase:** Specifically targets artist naming conventions (semicolon-separated in Spotify vs. collaborative tokens in Grammys), null presence in popularity, and boundary verification of acoustic metrics ($[0.0, 1.0]$).
-* **Great Expectations Gates:** Enforces strict non-null and valid range constraints to ensure no corrupt timestamps or broken keys enter the Data Warehouse.
-* **Dimensional Modeling:** Directly drives fact table measure definitions (`popularity`, audio features, award counts) and dimension hierarchies (`dim_artist`, `dim_track`, `dim_genre`, `dim_time`, `dim_grammy_category`).
+## 5. Traceability references
+
+| Requirement | Rules | Transformations | DW element | KPI |
+| :--- | :--- | :--- | :--- | :--- |
+| RQ-01 | DQ-RAW-SPT-01/03, DQ-RAW-GRM-01/02, DQ-PREP-INT-02/04/06/07/08 | TR-01, TR-04, TR-05, TR-07, TR-09 | `vw_kpi1_audio_profile` | KPI-01 |
+| RQ-02 | DQ-RAW-SPT-04/06, DQ-PREP-INT-04/05/08 | TR-03, TR-04, TR-05, TR-09 | `vw_kpi2_genre_uplift` | KPI-02 |
+| RQ-03 | DQ-RAW-SPT-02, DQ-RAW-GRM-01/04, DQ-PREP-INT-06 | TR-02, TR-07, TR-08, TR-10 | `vw_kpi3_decade_trends` | KPI-03 |

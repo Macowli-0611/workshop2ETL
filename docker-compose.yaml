@@ -1,36 +1,65 @@
+# ==============================================================
+# Workshop-2 ETL — reproducible local environment
+#   docker compose up -d --build
+# Services:
+#   postgres      PostgreSQL 16: source_music_db (Grammy source), dw_music_analytics (DW),
+#                 airflow_db (Airflow metadata), metabase_db (BI application metadata)
+#   airflow-init  Airflow metadata migration
+#   source-seed   Source preparation: loads the provided Grammy CSV into source_music_db
+#                 and writes the row-count reconciliation report (NOT the ETL load)
+#   airflow       Apache Airflow 3.1.8 (standalone: api-server, scheduler, dag-processor, triggerer)
+#   metabase      BI dashboard connected to dw_music_analytics
+# Credentials come from .env (see .env.example); nothing secret is hard-coded here.
+# ==============================================================
+
+x-airflow-common-env: &airflow-common-env
+  AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/airflow_db
+  AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+  POSTGRES_HOST: postgres
+  POSTGRES_PORT: "5432"
+  POSTGRES_USER: ${POSTGRES_USER}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+  SOURCE_DB_NAME: source_music_db
+  DW_DB_NAME: dw_music_analytics
+  DATA_DIR: /opt/airflow/data
+  SPOTIFY_CSV_PATH: /opt/airflow/data/spotify_dataset.csv
+  GRAMMY_CSV_PATH: /opt/airflow/data/the_grammy_awards.csv
+  PYTHONPATH: /opt/airflow
+
+x-airflow-common-volumes: &airflow-common-volumes
+  - ./dags:/opt/airflow/dags
+  - ./src:/opt/airflow/src
+  - ./gx:/opt/airflow/gx
+  - ./sql:/opt/airflow/sql
+  - ./data:/opt/airflow/data
+  - ./docs:/opt/airflow/docs
+  - ./scripts:/opt/airflow/scripts
+  - ./notebooks:/opt/airflow/notebooks
+  - ./logs:/opt/airflow/logs
+
 services:
-  # ==============================================================
-  # 1. Base de Datos Relacional (PostgreSQL 16)
-  # Aloja:
-  # - source_music_db: Fuente operacional para Grammys
-  # - dw_music_analytics: Data Warehouse dimensional (Star Schema)
-  # - airflow_db: Base de metadatos de Apache Airflow
-  # ==============================================================
   postgres:
     image: postgres:16-alpine
     container_name: workshop2_postgres
     restart: always
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_secure_password}
-      POSTGRES_MULTIPLE_DATABASES: "source_music_db,dw_music_analytics,airflow_db"
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_MULTIPLE_DATABASES: "source_music_db,dw_music_analytics,airflow_db,metabase_db"
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./sql/init_multiple_databases.sh:/docker-entrypoint-initdb.d/01_init_multiple_databases.sh:ro
+      - ./sql:/sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
     networks:
       - workshop2_net
 
-  # ==============================================================
-  # 2. Inicialización de Metadatos de Airflow 3.1.8
-  # Ejecuta migraciones de esquema en PostgreSQL antes de iniciar servicios
-  # ==============================================================
   airflow-init:
     build:
       context: .
@@ -39,17 +68,25 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    environment:
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres_secure_password}@postgres:5432/airflow_db
-      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+    environment: *airflow-common-env
     command: airflow db migrate
     networks:
       - workshop2_net
 
-  # ==============================================================
-  # 3. Apache Airflow 3.1.8 (Orquestador Principal)
-  # Ejecuta modo standalone (API Server, Scheduler, Triggerer, DAG Processor)
-  # ==============================================================
+  source-seed:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: workshop2_source_seed
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment: *airflow-common-env
+    volumes: *airflow-common-volumes
+    entrypoint: ["python", "/opt/airflow/scripts/seed_source_db.py"]
+    networks:
+      - workshop2_net
+
   airflow:
     build:
       context: .
@@ -61,28 +98,43 @@ services:
         condition: service_healthy
       airflow-init:
         condition: service_completed_successfully
+      source-seed:
+        condition: service_completed_successfully
     environment:
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres_secure_password}@postgres:5432/airflow_db
-      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+      <<: *airflow-common-env
       AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "False"
-      AIRFLOW__API__AUTH_BACKENDS: "airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session"
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: "5432"
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_secure_password}
-      SOURCE_DB_NAME: source_music_db
-      DW_DB_NAME: dw_music_analytics
-      DATA_DIR: /opt/airflow/data
-      PYTHONPATH: /opt/airflow
+      # Local development only: every UI visitor is admin, so no generated password is needed.
+      # The UI is bound to 127.0.0.1 and never exposed outside this machine.
+      AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_ALL_ADMINS: "True"
+      # Used only by scripts/setup_metabase.py (docker compose exec airflow ...)
+      MB_ADMIN_EMAIL: ${MB_ADMIN_EMAIL:-}
+      MB_ADMIN_PASSWORD: ${MB_ADMIN_PASSWORD:-}
+      METABASE_PORT: ${METABASE_PORT:-3000}
     ports:
-      - "8080:8080"
-    volumes:
-      - ./dags:/opt/airflow/dags
-      - ./src:/opt/airflow/src
-      - ./gx:/opt/airflow/gx
-      - ./sql:/opt/airflow/sql
-      - ./data:/opt/airflow/data
+      - "127.0.0.1:${AIRFLOW_PORT:-8080}:8080"
+    volumes: *airflow-common-volumes
     command: airflow standalone
+    networks:
+      - workshop2_net
+
+  metabase:
+    image: metabase/metabase:v0.56.9
+    container_name: workshop2_metabase
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      MB_DB_TYPE: postgres
+      MB_DB_DBNAME: metabase_db
+      MB_DB_PORT: "5432"
+      MB_DB_USER: ${POSTGRES_USER}
+      MB_DB_PASS: ${POSTGRES_PASSWORD}
+      MB_DB_HOST: postgres
+      MB_ANON_TRACKING_ENABLED: "false"
+      MB_CHECK_FOR_UPDATES: "false"
+    ports:
+      - "127.0.0.1:${METABASE_PORT:-3000}:3000"
     networks:
       - workshop2_net
 
