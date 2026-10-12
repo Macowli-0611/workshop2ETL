@@ -3,7 +3,7 @@
   "suite": "grammys_raw_suite",
   "validation_definition": "grammys_raw_validation_definition",
   "checkpoint": "grammys_raw_checkpoint",
-  "evaluated_at": "2026-10-12T00:26:24.915141+00:00",
+  "evaluated_at": "2026-10-12T01:32:06.904377+00:00",
   "batch_context": {
     "run_id": "test_c_safe_rerun",
     "source": "source_music_db.grammy_awards"

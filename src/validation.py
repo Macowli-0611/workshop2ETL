@@ -162,6 +162,10 @@ def prepared_expectations() -> list:
         _rule(gxe.ExpectColumnDistinctValuesToContainSet, "DQ-PREP-INT-07", CRITICAL,
               "Analytical readiness: both award tiers must exist (zero matches = broken integration).",
               column="is_grammy_winner", value_set=[True, False]),
+        _rule(gxe.ExpectColumnValuesToBeInSet, "DQ-PREP-INT-07", CRITICAL,
+              "Analytical readiness: matched rows must be at least 0.1% of the catalog (~114 rows). "
+              "Below that KPI-02 has no comparable genre (n >= 5) and the drop signals a broken match key.",
+              column="is_grammy_winner", value_set=[True], mostly=0.001),
         _rule(gxe.ExpectColumnValuesToBeInSet, "DQ-PREP-INT-08", WARNING,
               "Match-rate monitor: matched rows must not exceed 5% of the catalog (over-matching risk).",
               column="is_grammy_winner", value_set=[False], mostly=0.95),

@@ -1,8 +1,8 @@
 dag_id                  | logical_date | task_id                 | state           | start_date                       | end_date                        
-reliable_music_pipeline |              | extract_spotify         | success         | 2026-10-12T00:28:08.060304+00:00 | 2026-10-12T00:28:09.769183+00:00
-reliable_music_pipeline |              | extract_grammys         | success         | 2026-10-12T00:28:08.058454+00:00 | 2026-10-12T00:28:09.192475+00:00
-reliable_music_pipeline |              | transform_and_integrate | upstream_failed | 2026-10-12T00:28:27.470239+00:00 | 2026-10-12T00:28:27.470239+00:00
-reliable_music_pipeline |              | validate_grammys_raw    | failed          | 2026-10-12T00:28:10.121914+00:00 | 2026-10-12T00:28:26.843615+00:00
-reliable_music_pipeline |              | validate_prepared       | upstream_failed | 2026-10-12T00:28:28.706900+00:00 | 2026-10-12T00:28:28.706900+00:00
-reliable_music_pipeline |              | load_dw                 | upstream_failed | 2026-10-12T00:28:29.822013+00:00 | 2026-10-12T00:28:29.822013+00:00
-reliable_music_pipeline |              | validate_spotify_raw    | success         | 2026-10-12T00:28:10.125199+00:00 | 2026-10-12T00:28:25.314600+00:00
+reliable_music_pipeline |              | extract_grammys         | success         | 2026-10-12T01:32:53.287780+00:00 | 2026-10-12T01:32:53.962564+00:00
+reliable_music_pipeline |              | extract_spotify         | success         | 2026-10-12T01:32:53.288282+00:00 | 2026-10-12T01:32:54.416602+00:00
+reliable_music_pipeline |              | validate_spotify_raw    | success         | 2026-10-12T01:32:55.464645+00:00 | 2026-10-12T01:33:01.887507+00:00
+reliable_music_pipeline |              | transform_and_integrate | upstream_failed | 2026-10-12T01:33:05.762361+00:00 | 2026-10-12T01:33:05.762361+00:00
+reliable_music_pipeline |              | validate_grammys_raw    | failed          | 2026-10-12T01:32:54.378059+00:00 | 2026-10-12T01:33:05.661681+00:00
+reliable_music_pipeline |              | validate_prepared       | upstream_failed | 2026-10-12T01:33:06.394759+00:00 | 2026-10-12T01:33:06.394759+00:00
+reliable_music_pipeline |              | load_dw                 | upstream_failed | 2026-10-12T01:33:07.429675+00:00 | 2026-10-12T01:33:07.429675+00:00

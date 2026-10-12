@@ -1,0 +1,7 @@
+-- 2026-10-12T01:35:44Z cleanup: remove the suffix so the source mirrors the provided CSV again
+UPDATE 2970
+ suffixed_rows_left | total_rows 
+--------------------+------------
+                  0 |       4810
+(1 row)
+

@@ -51,7 +51,7 @@ Reliability controls: dependencies, selective retries, structured logs with batc
 | `validate_spotify_raw` | path | `{dataset, decision, path}` | `runs/<run>/spotify_raw_validation.json` |
 | `validate_grammys_raw` | path | `{dataset, decision, path}` | `runs/<run>/grammys_raw_validation.json` |
 | `transform_and_integrate` | 2 gate dicts | path `str` | `prepared_music_data.parquet`, `runs/<run>/integration_report.json` |
-| `validate_prepared` | path | `{dataset, decision, path}` | `runs/<run>/prepared_validation.json` |
+| `validate_prepared` | path | `{dataset, decision, path}` | `runs/<run>/prepared_validation.json` (19 expectations) |
 | `load_dw` | gate dict | load metrics dict (~20 numbers) | `runs/<run>/load_report.json` + DW tables |
 
 ---
@@ -65,6 +65,7 @@ Reliability controls: dependencies, selective retries, structured logs with batc
 | CSV missing at the documented path | Deterministic (configuration) | `FileNotFoundError` after the retries are exhausted; downstream blocked. | Retries apply (same class as I/O); they cannot fix it and the error message names the path | The task can't tell "missing" from "not mounted yet" on the first attempt; the cost is under a minute. |
 | Missing required column (DQ-RAW-SPT-05 / GRM-03 / PREP-INT-03) | Deterministic data contract, Critical | Gate raises `CriticalDataQualityError`; downstream `upstream_failed`. | **No** (`retries=0`) | Re-validating the same batch reproduces the failure; it must be surfaced. |
 | Critical GX rule violated (e.g. year 1800, DQ-RAW-GRM-01) | Deterministic data quality, Critical | Same as above; evidence JSON names the rule and the unexpected values. | **No** | **Demonstrated in Test B.** Requires source correction. |
+| Integration collapse: raw data valid but matched rows < 0.1% (DQ-PREP-INT-07) | Deterministic data quality, Critical (prepared gate) | `validate_prepared` fails, `load_dw` is `upstream_failed`, DW keeps the previous snapshot. | **No** | **Demonstrated in Test E.** A source format change must be fixed upstream or in the match rules. |
 | Warning GX rule violated (DQ-RAW-SPT-06, DQ-RAW-GRM-02, DQ-PREP-INT-08) | Data quality, Warning | Logged at WARNING, decision `CONTINUE_WITH_WARNING`, batch continues. | n/a | Documented policy: visible but not invalidating. |
 | Informational rule signal (DQ-RAW-GRM-04, DQ-PREP-INT-01) | Monitoring | Recorded only. | n/a | Trend signal. |
 | Transformation exception (unexpected type, join cardinality violated) | Deterministic code / contract | Task fails with traceback; downstream blocked. | **No** | Same input + same code = same error. |
@@ -79,10 +80,10 @@ Reliability controls: dependencies, selective retries, structured logs with batc
 
 | Question | Where to look |
 | :--- | :--- |
-| What ran? | Airflow Grid/Graph view: DAG `reliable_music_pipeline`, run IDs `test_a_success`, `test_b_controlled_failure`, `test_c_safe_rerun`, `test_d_transient_retry`. Every task log starts with `BATCH CONTEXT | dag=… run_id=… task=… try=…`. |
+| What ran? | Airflow Grid/Graph view: DAG `reliable_music_pipeline`, run IDs `test_a_success`, `test_b_controlled_failure`, `test_c_safe_rerun`, `test_d_transient_retry`, `test_e_prepared_gate`. Every task log starts with `BATCH CONTEXT | dag=… run_id=… task=… try=…`. |
 | When? | Run and task start/end timestamps in the UI and in `docs/evidence/test_*/task_states.txt`. |
 | Did it succeed? | DAG run / task instance states plus material counts: rows extracted, rows removed per rule, matched rows, fact rows inserted/updated/purged, before/after snapshots (`load_dw` log, `load_report.json`). |
-| Where did it fail? | The failed task (red) and `upstream_failed` downstream tasks (screenshots `b1`, `b2`). |
+| Where did it fail? | The failed task (red) and `upstream_failed` downstream tasks (screenshots `b1`, `b2`, `e1`). |
 | Why? | Actionable error: `Critical quality gate failure in grammys_raw: DQ-RAW-GRM-01 (year)… Evidence: …/grammys_raw_validation.json` and the JSON with `partial_unexpected_list: [1800]`. |
 | What happened next? | Retry history (`test_d_selective_retry/try_history.txt`: try 1 failed → try 2 success), stop on Critical, `CONTINUE_WITH_WARNING` for warnings. |
 

@@ -1,10 +1,10 @@
--- 2026-10-12T00:28:00Z injected into source_music_db.grammy_awards to violate DQ-RAW-GRM-01 [Critical]
+-- 2026-10-12T01:32:50Z injected into source_music_db.grammy_awards to violate DQ-RAW-GRM-01 [Critical]
 INSERT INTO grammy_awards (year, title, category, nominee, artist, winner)
-        VALUES (1800, 'Test B injected record', 'Record Of The Year', 'Test B Invalid Year', 'Test B', TRUE)
-        RETURNING id, year, nominee;
+          VALUES (1800, 'Test B injected record', 'Record Of The Year', 'Test B Invalid Year', 'Test B', TRUE)
+          RETURNING id, year, nominee;
   id  | year |       nominee       
 ------+------+---------------------
- 4811 | 1800 | Test B Invalid Year
+ 4812 | 1800 | Test B Invalid Year
 (1 row)
 
 INSERT 0 1

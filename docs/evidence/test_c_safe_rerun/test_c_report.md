@@ -1,6 +1,6 @@
 # Test C — Repeatability & Safe Rerun (Section 7.3)
 
-**Run:** `reliable_music_pipeline` / `test_c_safe_rerun` · 2026-10-12 00:26:06 → 00:27:24 UTC · **success**. Same input batch as `test_a_success` (same CSV, same source table).
+**Run:** `reliable_music_pipeline` / `test_c_safe_rerun` · 2026-10-12 01:32:00 → 01:32:35 UTC · **success**. Same input batch as `test_a_success` (same CSV, same source table).
 
 ## Strategy
 

@@ -37,7 +37,7 @@ Workshop-2 · Building a Reliable Batch Data Pipeline. This document covers sect
 | **DQ-PREP-INT-04** | Prepared | `popularity`, `duration_ms`, audio features | Validity (post-transformation invariant) | Ranges hold after transformation: popularity [0, 100], duration > 1,000 ms (no tolerance), features [0, 1]. | 100% within range. | Critical | RQ-01..03 | After TR-01/02 no exception is acceptable; it also matches the DW `CHECK` constraints. |
 | **DQ-PREP-INT-05** | Prepared | `track_id_spotify`, `genre_name`, `award_year`, `grammy_category` | Uniqueness (grain) | One row per declared fact grain. | 0 duplicates. | Critical | RQ-01..03 | Otherwise the `ON CONFLICT` upsert fails or double counts. |
 | **DQ-PREP-INT-06** | Prepared | `award_year`, `award_count` (by `is_grammy_winner`) | Consistency (integration integrity) | Matched rows have year in [1958, 2026] and `award_count` ≥ 1; unmatched rows have year = 0. | 100% (row conditions). | Critical | RQ-01, RQ-03 | Verifies that the join and the default-member logic (TR-09) are coherent. |
-| **DQ-PREP-INT-07** | Prepared | `is_grammy_winner` | Analytical readiness | Both award tiers exist. | Distinct values ⊇ {True, False}. | Critical | RQ-01, RQ-02 | Zero matches means a broken integration, and the comparative KPIs would be meaningless. |
+| **DQ-PREP-INT-07** | Prepared | `is_grammy_winner` | Analytical readiness | Both award tiers exist **and** matched rows are at least 0.1% of the catalog. | Distinct values ⊇ {True, False}; ≥ 0.1% True (about 114 rows; observed 0.42%). | Critical | RQ-01, RQ-02 | Below the floor KPI-02 has no genre with n ≥ 5 and KPI-01 compares against a handful of songs; a > 4× drop means the match key broke. **Proven in Test E.** |
 | **DQ-PREP-INT-08** | Prepared | `is_grammy_winner` | Plausibility (match rate) | Matched rows ≤ 5% of the catalog. | ≥ 95% unmatched. | Warning | RQ-01, RQ-02 | Observed 0.42%. A jump above 5% suggests over-matching (key too loose). |
 | **DQ-PREP-INT-01** | Prepared | `is_grammy_winner` | Validity (domain) | Award flag is boolean. | Value set {True, False}. | Informational | RQ-01, RQ-02 | Type monitor for the flag used by every KPI. |
 
@@ -45,7 +45,7 @@ Workshop-2 · Building a Reliable Batch Data Pipeline. This document covers sect
 
 ## 3. Great Expectations Design (Section 6.6)
 
-All three gates use the same chain, implemented once in `src/validation.py:run_gate`:
+All three gates (32 expectations: 9 Spotify raw, 4 Grammy raw, 19 prepared) use the same chain, implemented once in `src/validation.py:run_gate`:
 
 ```
 Data Source (pandas, "<gate>_source")
@@ -89,6 +89,7 @@ Each validation result JSON contains: gate, suite, validation definition, checkp
 | | `expect_compound_columns_to_be_unique` | fact grain | DQ-PREP-INT-05 |
 | | `expect_column_values_to_be_between` ×3 (row conditions) | winners: `award_year` ∈ [1958, 2026], `award_count` ≥ 1; non-winners: `award_year` = 0 | DQ-PREP-INT-06 |
 | | `expect_column_distinct_values_to_contain_set` | `is_grammy_winner` ⊇ {True, False} | DQ-PREP-INT-07 |
+| | `expect_column_values_to_be_in_set` | `is_grammy_winner` ∈ {True}, `mostly=0.001` (matched-row floor) | DQ-PREP-INT-07 |
 | | `expect_column_values_to_be_in_set` | `is_grammy_winner` ∈ {False}, `mostly=0.95` | DQ-PREP-INT-08 |
 | | `expect_column_values_to_be_in_set` | `is_grammy_winner` ∈ {True, False} | DQ-PREP-INT-01 |
 
@@ -98,5 +99,6 @@ Each validation result JSON contains: gate, suite, validation definition, checkp
 | :--- | :--- | :--- | :--- |
 | `test_a_success` | spotify_raw | 9/9 passed → CONTINUE | [`runs/test_a_success/spotify_raw_validation.json`](evidence/runs/test_a_success/spotify_raw_validation.json) |
 | `test_a_success` | grammys_raw | 4/4 passed → CONTINUE | [`runs/test_a_success/grammys_raw_validation.json`](evidence/runs/test_a_success/grammys_raw_validation.json) |
-| `test_a_success` | prepared | 18/18 passed → CONTINUE | [`runs/test_a_success/prepared_validation.json`](evidence/runs/test_a_success/prepared_validation.json) |
+| `test_a_success` | prepared | 19/19 passed → CONTINUE | [`runs/test_a_success/prepared_validation.json`](evidence/runs/test_a_success/prepared_validation.json) |
 | `test_b_controlled_failure` | grammys_raw | 3/4 → **STOP** (DQ-RAW-GRM-01, `unexpected_count=1`, value 1800) | [`runs/test_b_controlled_failure/grammys_raw_validation.json`](evidence/runs/test_b_controlled_failure/grammys_raw_validation.json) |
+| `test_e_prepared_gate` | prepared | 18/19 → **STOP** (DQ-PREP-INT-07: 71 matched rows = 0.063% < 0.1%) | [`runs/test_e_prepared_gate/prepared_validation.json`](evidence/runs/test_e_prepared_gate/prepared_validation.json) |

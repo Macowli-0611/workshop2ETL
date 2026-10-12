@@ -3,7 +3,7 @@
   "suite": "prepared_music_suite",
   "validation_definition": "prepared_validation_definition",
   "checkpoint": "prepared_checkpoint",
-  "evaluated_at": "2026-10-12T00:29:49.246800+00:00",
+  "evaluated_at": "2026-10-12T01:34:12.537103+00:00",
   "batch_context": {
     "run_id": "test_d_transient_retry"
   },
@@ -11,8 +11,8 @@
   "gx_success": true,
   "gate_decision": "CONTINUE",
   "summary": {
-    "expectations_evaluated": 18,
-    "expectations_passed": 18,
+    "expectations_evaluated": 19,
+    "expectations_passed": 19,
     "critical_failures": [],
     "warning_failures": [],
     "informational_failures": []
@@ -266,6 +266,41 @@
       "unexpected_count": null,
       "unexpected_percent": null,
       "partial_unexpected_list": null,
+      "observed_value": null,
+      "exception": null
+    },
+    {
+      "rule_id": "DQ-PREP-INT-07",
+      "severity": "Critical",
+      "expectation_type": "expect_column_values_to_be_in_set",
+      "target": "is_grammy_winner",
+      "description": "DQ-PREP-INT-07 [Critical]: Analytical readiness: matched rows must be at least 0.1% of the catalog (~114 rows). Below that KPI-02 has no comparable genre (n >= 5) and the drop signals a broken match key.",
+      "success": true,
+      "element_count": 113549,
+      "unexpected_count": 113074,
+      "unexpected_percent": 99.58167839434957,
+      "partial_unexpected_list": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
       "observed_value": null,
       "exception": null
     },

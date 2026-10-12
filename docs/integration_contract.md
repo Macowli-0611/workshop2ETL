@@ -10,7 +10,7 @@ Section 6.8 of the brief. Implemented in `src/transform.py:transform_and_integra
 | **Join type** | `LEFT JOIN` from the Spotify catalog: every catalog row is kept, because RQ-01/RQ-02 need the non-awarded catalog as the comparison group. | prepared rows = clean Spotify rows = 113,549 (`spotify_clean_rows_equal_prepared_rows: true`). |
 | **Unmatched records** | *Spotify side:* kept, with `is_grammy_winner=False`, `award_count=0`, `award_year=0` → `dim_time` SK 0 ("Unknown"), category → `dim_grammy_category` SK 0 ("No Nomination / Not Applicable"). *Grammy side:* unmatched keys are counted, not loaded (the DW grain is a catalog track). | Matched rows 0.418% of the catalog. Unmatched Grammy keys: 4,257 (95.9%). |
 | **Duplicate matches** | Impossible by design: the key is aggregated first, and `validate="many_to_one"` stops the task if it ever happens. Multi-award keys keep `award_count` (number of award rows), the latest `year` and the first `category`. | 286 keys with more than one award; `duplicate_matches_per_spotify_row: 0`. |
-| **Quality checks on the result** | DQ-PREP-INT-05 (grain unique), DQ-PREP-INT-06 (matched ⇒ valid year and award_count ≥ 1; unmatched ⇒ year 0), DQ-PREP-INT-07 (both tiers exist), DQ-PREP-INT-08 (match rate ≤ 5%). | `prepared_validation.json`: 18/18 passed. |
+| **Quality checks on the result** | DQ-PREP-INT-05 (grain unique), DQ-PREP-INT-06 (matched ⇒ valid year and award_count ≥ 1; unmatched ⇒ year 0), DQ-PREP-INT-07 (both tiers exist and matched rows ≥ 0.1%, the floor that catches a broken key, see Test E), DQ-PREP-INT-08 (match rate ≤ 5%). | `prepared_validation.json`: 19/19 passed. Test E: a key break (71 rows) is stopped. |
 
 ## Assumptions and limitations
 

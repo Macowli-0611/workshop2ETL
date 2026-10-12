@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Captures Airflow UI screenshots for the reliability evidence (Tests A-D)
+Captures Airflow UI screenshots for the reliability evidence (Tests A-E)
 and the Metabase dashboard screenshot.
 
 Runs in the official Playwright image attached to the compose network:
@@ -93,6 +93,13 @@ def main():
              f"{EVID}/test_d_selective_retry/d2_attempt1_failed_log.png", wait_text="BATCH CONTEXT")
         shot(page, f"{task('test_d_transient_retry', 'extract_grammys')}?try_number=2",
              f"{EVID}/test_d_selective_retry/d3_attempt2_success_log.png", wait_text="BATCH CONTEXT")
+
+        # Test E - prepared gate blocks the load
+        shot(page, run("test_e_prepared_gate"), f"{EVID}/test_e_prepared_gate/e1_graph_prepared_gate.png", graph=True)
+        ensure_grid(page)
+        shot(page, task("test_e_prepared_gate", "validate_prepared"),
+             f"{EVID}/test_e_prepared_gate/e2_validate_prepared_log.png", wait_text="BATCH CONTEXT",
+             scroll_log_bottom=True)
 
         # DAG overview: all runs in the grid
         shot(page, f"{BASE}/dags/{DAG}", f"{EVID}/dag_overview_all_runs.png")

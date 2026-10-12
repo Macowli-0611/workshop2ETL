@@ -1,7 +1,7 @@
--- 2026-10-12T00:28:54Z cleanup: the source again mirrors the provided CSV
+-- 2026-10-12T01:33:23Z cleanup: the source again mirrors the provided CSV
   id  | year 
 ------+------
- 4811 | 1800
+ 4812 | 1800
 (1 row)
 
 DELETE 1

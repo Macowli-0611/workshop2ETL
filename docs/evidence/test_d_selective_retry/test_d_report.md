@@ -4,16 +4,16 @@
 
 ## Procedure (`procedure.txt`)
 
-1. `00:28:54Z` simulate a transient outage: `ALTER DATABASE source_music_db ALLOW_CONNECTIONS false;`. The database is up, but it refuses new connections, the same symptom as a restart or a full connection pool.
+1. `01:33:24Z` simulate a transient outage: `ALTER DATABASE source_music_db ALLOW_CONNECTIONS false;`. The database is up, but it refuses new connections, the same symptom as a restart or a full connection pool.
 2. Trigger the run. `extract_grammys` attempt 1 fails with `psycopg2.OperationalError: database "source_music_db" is not currently accepting connections` and goes to **`up_for_retry`**.
-3. `00:29:12Z` restore connections (`ALLOW_CONNECTIONS true`).
+3. `01:33:34Z` restore connections (`ALLOW_CONNECTIONS true`).
 4. After the retry delay (15 s, exponential backoff), attempt 2 extracts 4,810 rows; the rest of the DAG completes.
 
 ## Evidence
 
 | Artifact | What it proves |
 | :--- | :--- |
-| `try_history.txt` | `extract_grammys` try 1 = **failed** (00:29:01), try 2 = **success** (00:29:30). |
+| `try_history.txt` | `extract_grammys` try 1 = **failed** (01:33:28), try 2 = **success** (01:33:57). |
 | `logs/extract_grammys_attempt1.log`, `d2_attempt1_failed_log.png` | Actionable cause of the transient error, with the batch context `try=1`. |
 | `logs/extract_grammys_attempt2.log`, `d3_attempt2_success_log.png` | `try=2` recovers: "Grammy Awards successfully extracted from PostgreSQL: 4,810 records". |
 | `d1_grid_retry_run.png`, `task_states.txt` | All 7 tasks end in success; the downstream tasks waited for the retry instead of failing. |

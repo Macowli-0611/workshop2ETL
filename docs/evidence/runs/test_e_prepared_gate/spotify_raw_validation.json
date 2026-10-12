@@ -1,0 +1,257 @@
+{
+  "gate": "spotify_raw",
+  "suite": "spotify_raw_suite",
+  "validation_definition": "spotify_raw_validation_definition",
+  "checkpoint": "spotify_raw_checkpoint",
+  "evaluated_at": "2026-10-12T01:35:04.441020+00:00",
+  "batch_context": {
+    "run_id": "test_e_prepared_gate",
+    "source": "spotify_dataset.csv"
+  },
+  "total_records": 114000,
+  "gx_success": true,
+  "gate_decision": "CONTINUE",
+  "summary": {
+    "expectations_evaluated": 9,
+    "expectations_passed": 9,
+    "critical_failures": [],
+    "warning_failures": [],
+    "informational_failures": []
+  },
+  "rules_evaluated": [
+    {
+      "rule_id": "DQ-RAW-SPT-05",
+      "severity": "Critical",
+      "expectation_type": "expect_table_columns_to_match_set",
+      "target": "table",
+      "description": "DQ-RAW-SPT-05 [Critical]: Source contract: every column required by RQ-01..RQ-03 must be present.",
+      "success": true,
+      "element_count": null,
+      "unexpected_count": null,
+      "unexpected_percent": null,
+      "partial_unexpected_list": null,
+      "observed_value": [
+        "Unnamed: 0",
+        "acousticness",
+        "album_name",
+        "artists",
+        "danceability",
+        "duration_ms",
+        "energy",
+        "explicit",
+        "instrumentalness",
+        "key",
+        "liveness",
+        "loudness",
+        "mode",
+        "popularity",
+        "speechiness",
+        "tempo",
+        "time_signature",
+        "track_genre",
+        "track_id",
+        "track_name",
+        "valence"
+      ],
+      "exception": null
+    },
+    {
+      "rule_id": "DQ-RAW-SPT-06",
+      "severity": "Warning",
+      "expectation_type": "expect_compound_columns_to_be_unique",
+      "target": [
+        "track_id",
+        "track_genre"
+      ],
+      "description": "DQ-RAW-SPT-06 [Warning]: (track_id, track_genre) duplicates must not exceed 1% of the batch (profiling: 450 = 0.39%).",
+      "success": true,
+      "element_count": 114000,
+      "unexpected_count": 894,
+      "unexpected_percent": 0.7842105263157895,
+      "partial_unexpected_list": [
+        {
+          "track_id": "0CDucx9lKxuCZplLXUz0iX",
+          "track_genre": "afrobeat"
+        },
+        {
+          "track_id": "0CDucx9lKxuCZplLXUz0iX",
+          "track_genre": "afrobeat"
+        },
+        {
+          "track_id": "2aibwv5hGXSgw7Yru8IYTO",
+          "track_genre": "alt-rock"
+        },
+        {
+          "track_id": "2aibwv5hGXSgw7Yru8IYTO",
+          "track_genre": "alt-rock"
+        },
+        {
+          "track_id": "7mULVp0DJrI2Nd6GesLvxn",
+          "track_genre": "alternative"
+        },
+        {
+          "track_id": "7mULVp0DJrI2Nd6GesLvxn",
+          "track_genre": "alternative"
+        },
+        {
+          "track_id": "6d3RIvHfVkoOtW1WHXmbX3",
+          "track_genre": "ambient"
+        },
+        {
+          "track_id": "6d3RIvHfVkoOtW1WHXmbX3",
+          "track_genre": "ambient"
+        },
+        {
+          "track_id": "481beimUiUnMUzSbOAFcUT",
+          "track_genre": "anime"
+        },
+        {
+          "track_id": "481beimUiUnMUzSbOAFcUT",
+          "track_genre": "anime"
+        },
+        {
+          "track_id": "57QCT8L3kFQiN4AXkBRJxW",
+          "track_genre": "black-metal"
+        },
+        {
+          "track_id": "57QCT8L3kFQiN4AXkBRJxW",
+          "track_genre": "black-metal"
+        },
+        {
+          "track_id": "3RIeNvIwO6ZRMLiwla7DdY",
+          "track_genre": "black-metal"
+        },
+        {
+          "track_id": "3RIeNvIwO6ZRMLiwla7DdY",
+          "track_genre": "black-metal"
+        },
+        {
+          "track_id": "6FmQMYlxRl56FIgOwvRBil",
+          "track_genre": "black-metal"
+        },
+        {
+          "track_id": "6FmQMYlxRl56FIgOwvRBil",
+          "track_genre": "black-metal"
+        },
+        {
+          "track_id": "6laLzRAweI0HEOYDMO4Kds",
+          "track_genre": "bluegrass"
+        },
+        {
+          "track_id": "6laLzRAweI0HEOYDMO4Kds",
+          "track_genre": "bluegrass"
+        },
+        {
+          "track_id": "5Aq43Qi1j27J5KQkKYYKq0",
+          "track_genre": "bluegrass"
+        },
+        {
+          "track_id": "5Aq43Qi1j27J5KQkKYYKq0",
+          "track_genre": "bluegrass"
+        }
+      ],
+      "observed_value": null,
+      "exception": null
+    },
+    {
+      "rule_id": "DQ-RAW-SPT-01",
+      "severity": "Critical",
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "target": "track_id",
+      "description": "DQ-RAW-SPT-01 [Critical]: Technical track identifier must be 100% non-null.",
+      "success": true,
+      "element_count": 114000,
+      "unexpected_count": 0,
+      "unexpected_percent": 0.0,
+      "partial_unexpected_list": [],
+      "observed_value": null,
+      "exception": null
+    },
+    {
+      "rule_id": "DQ-RAW-SPT-02",
+      "severity": "Critical",
+      "expectation_type": "expect_column_values_to_be_between",
+      "target": "duration_ms",
+      "description": "DQ-RAW-SPT-02 [Critical]: Track duration must exceed 1,000 ms in at least 99.9% of the raw batch.",
+      "success": true,
+      "element_count": 114000,
+      "unexpected_count": 1,
+      "unexpected_percent": 0.0008771929824561403,
+      "partial_unexpected_list": [
+        0
+      ],
+      "observed_value": null,
+      "exception": null
+    },
+    {
+      "rule_id": "DQ-RAW-SPT-03",
+      "severity": "Critical",
+      "expectation_type": "expect_column_values_to_be_between",
+      "target": "danceability",
+      "description": "DQ-RAW-SPT-03 [Critical]: danceability must be within the normalized range [0.0, 1.0].",
+      "success": true,
+      "element_count": 114000,
+      "unexpected_count": 0,
+      "unexpected_percent": 0.0,
+      "partial_unexpected_list": [],
+      "observed_value": null,
+      "exception": null
+    },
+    {
+      "rule_id": "DQ-RAW-SPT-03",
+      "severity": "Critical",
+      "expectation_type": "expect_column_values_to_be_between",
+      "target": "energy",
+      "description": "DQ-RAW-SPT-03 [Critical]: energy must be within the normalized range [0.0, 1.0].",
+      "success": true,
+      "element_count": 114000,
+      "unexpected_count": 0,
+      "unexpected_percent": 0.0,
+      "partial_unexpected_list": [],
+      "observed_value": null,
+      "exception": null
+    },
+    {
+      "rule_id": "DQ-RAW-SPT-03",
+      "severity": "Critical",
+      "expectation_type": "expect_column_values_to_be_between",
+      "target": "valence",
+      "description": "DQ-RAW-SPT-03 [Critical]: valence must be within the normalized range [0.0, 1.0].",
+      "success": true,
+      "element_count": 114000,
+      "unexpected_count": 0,
+      "unexpected_percent": 0.0,
+      "partial_unexpected_list": [],
+      "observed_value": null,
+      "exception": null
+    },
+    {
+      "rule_id": "DQ-RAW-SPT-03",
+      "severity": "Critical",
+      "expectation_type": "expect_column_values_to_be_between",
+      "target": "acousticness",
+      "description": "DQ-RAW-SPT-03 [Critical]: acousticness must be within the normalized range [0.0, 1.0].",
+      "success": true,
+      "element_count": 114000,
+      "unexpected_count": 0,
+      "unexpected_percent": 0.0,
+      "partial_unexpected_list": [],
+      "observed_value": null,
+      "exception": null
+    },
+    {
+      "rule_id": "DQ-RAW-SPT-04",
+      "severity": "Critical",
+      "expectation_type": "expect_column_values_to_be_between",
+      "target": "popularity",
+      "description": "DQ-RAW-SPT-04 [Critical]: Popularity must be within the integer range [0, 100].",
+      "success": true,
+      "element_count": 114000,
+      "unexpected_count": 0,
+      "unexpected_percent": 0.0,
+      "partial_unexpected_list": [],
+      "observed_value": null,
+      "exception": null
+    }
+  ]
+}

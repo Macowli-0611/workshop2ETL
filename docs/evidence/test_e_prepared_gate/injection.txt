@@ -1,0 +1,12 @@
+-- 2026-10-12T01:34:49Z simulated upstream format change in source_music_db.grammy_awards.artist
+-- every credit gets a suffix: raw rules (year, nominee, schema, volume) still hold,
+-- but no (title, primary artist) key can match the Spotify catalog any more.
+UPDATE grammy_awards SET artist = artist || ' [credits v2]' WHERE artist IS NOT NULL;
+UPDATE 2970
+           artist           
+----------------------------
+ Billie Eilish [credits v2]
+ Bon Iver [credits v2]
+ Ariana Grande [credits v2]
+(3 rows)
+

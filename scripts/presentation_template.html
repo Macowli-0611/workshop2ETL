@@ -233,16 +233,16 @@ pre .k { color: #f59f6b; } pre .s { color: #9fd3a8; } pre .f { color: #ff8a7a; }
       </div>
       <div class="g2">
         <div class="card stat"><div class="n">2</div><div class="l">sources: Spotify <strong>CSV</strong> + Grammys from a <strong>PostgreSQL</strong> source DB</div></div>
-        <div class="card stat"><div class="n acc">18</div><div class="l">quality rules in <strong>3 GX gates</strong> (31 expectations)</div></div>
+        <div class="card stat"><div class="n acc">18</div><div class="l">quality rules in <strong>3 GX gates</strong> (32 expectations)</div></div>
         <div class="card stat"><div class="n">113,549</div><div class="l">fact rows loaded = prepared rows (full reconciliation)</div></div>
-        <div class="card stat"><div class="n ok">4/4</div><div class="l">reliability tests in Airflow: success · controlled failure · safe rerun · retry</div></div>
+        <div class="card stat"><div class="n ok">5/5</div><div class="l">reliability tests in Airflow: success · raw-gate stop · safe rerun · retry · prepared-gate stop</div></div>
       </div>
     </div>
   </div>
   <aside class="notes">
-    <p><strong>Apertura (≈45 s).</strong> «Construimos un pipeline batch confiable que integra el catálogo de Spotify, que llega como CSV, con los premios Grammy, que extraemos de una base PostgreSQL de origen. El producto final es un Data Warehouse en estrella y un dashboard con tres KPIs.»</p>
-    <p>Mensaje central: no es un script, es un sistema. Las fallas están <em>anticipadas</em> (reglas con severidad), <em>controladas</em> (las compuertas bloquean la carga) y son <em>observables</em> (estados, logs y JSON por ejecución).</p>
-    <p>Recorre los cuatro números de la derecha: los vas a demostrar uno por uno.</p>
+    <p><strong>Opening (about 45 s).</strong> “We built a reliable batch pipeline that integrates the Spotify catalog, delivered as a CSV, with the Grammy Awards, which we extract from a PostgreSQL source database. The product is a star-schema Data Warehouse and a dashboard with three KPIs.”</p>
+    <p>Core message: this is a system, not a script. Failures are <em>anticipated</em> (rules with severities), <em>controlled</em> (gates block the load) and <em>observable</em> (states, logs and per-run JSON).</p>
+    <p>Walk through the four numbers on the right: each one is demonstrated later.</p>
   </aside>
 </section>
 
@@ -268,9 +268,9 @@ pre .k { color: #f59f6b; } pre .s { color: #9fd3a8; } pre .f { color: #ff8a7a; }
     </div>
   </div>
   <aside class="notes">
-    <p>El PDF exige definir los requisitos <strong>antes</strong> del profiling y del modelado. Cada requisito determina datos, reglas, transformaciones y estructura dimensional.</p>
-    <p>Enfatiza la columna de las fuentes: ninguna fila se resuelve con una sola fuente, y eso justifica la integración.</p>
-    <div class="q"><strong>Si preguntan «¿por qué no hay nominados?»</strong>: el CSV de Grammys solo trae ganadores (4.810 de 4.810 con winner = True). Por eso comparamos ganadores contra catálogo y lo documentamos como limitación.</div>
+    <p>The brief asks for requirements <strong>before</strong> profiling and modelling. Each requirement determines the data, rules, transformations and dimensional structures.</p>
+    <p>Point at the source columns: no row can be answered with a single source, which is what justifies the integration.</p>
+    <div class="q"><strong>If asked “why no nominees?”</strong>: the Grammy file only contains winners (4,810 of 4,810 have winner = True). So we compare winners vs catalog and document it as a limitation.</div>
   </aside>
 </section>
 
@@ -286,7 +286,7 @@ pre .k { color: #f59f6b; } pre .s { color: #9fd3a8; } pre .f { color: #ff8a7a; }
       <div class="node"><b>extract_spotify</b>raw → Parquet, no cleaning</div><div class="arr">→</div>
       <div class="node gate"><b>validate_spotify_raw</b>GX · 9 expectations</div><div class="arr span2" style="font-size:26px">⇉</div>
       <div class="node span2"><b>transform_and_integrate</b>TR-01…TR-12 + integration contract. Runs only if <strong>both</strong> raw gates pass</div><div class="arr span2">→</div>
-      <div class="node gate span2"><b>validate_prepared</b>GX · 18 expectations</div><div class="arr span2">→</div>
+      <div class="node gate span2"><b>validate_prepared</b>GX · 19 expectations</div><div class="arr span2">→</div>
       <div class="node dw span2"><b>load_dw</b>star schema · 1 transaction<br><br><b>→ Metabase</b>3 KPIs on DW views</div>
       <div class="node src"><b>source_music_db</b>PostgreSQL · grammy_awards</div><div class="arr">→</div>
       <div class="node"><b>extract_grammys</b>SQL query → Parquet</div><div class="arr">→</div>
@@ -314,10 +314,10 @@ load_dw_task(prep)</pre>
     </div>
   </div>
   <aside class="notes">
-    <p>Sigue el diagrama de izquierda a derecha. Las dos ramas son <strong>independientes y observables</strong>: cada una tiene su propia extracción y su propia compuerta.</p>
-    <p>La convergencia es el punto clave: con la regla por defecto <code>all_success</code>, la transformación no arranca si alguna compuerta raw falla, y <code>load_dw</code> no arranca si falla la compuerta de datos preparados.</p>
-    <p>La lógica vive en <code>src/</code>; el DAG solo describe el flujo. Por XCom solo viajan rutas y diccionarios pequeños.</p>
-    <div class="q"><strong>Evidencia §4.3</strong>: la carga de la fuente es preparación y no es el Load del ETL. El log de <code>extract_grammys</code> dice «extracted from PostgreSQL: 4,810 records».</div>
+    <p>Follow the diagram left to right. The two branches are <strong>independent and observable</strong>: each has its own extraction and its own gate.</p>
+    <p>The convergence is the key point: with the default <code>all_success</code> rule, transformation cannot start if either raw gate fails, and <code>load_dw</code> cannot start if the prepared gate fails.</p>
+    <p>Logic lives in <code>src/</code>; the DAG only describes the flow. XCom only carries paths and small dicts.</p>
+    <div class="q"><strong>§4.3 evidence</strong>: loading the source is source preparation, not the ETL Load. The <code>extract_grammys</code> log says “extracted from PostgreSQL: 4,810 records”.</div>
   </aside>
 </section>
 
@@ -345,9 +345,9 @@ load_dw_task(prep)</pre>
     </div>
   </div>
   <aside class="notes">
-    <p>El profiling solo describe; no modifica nada. Cada tarjeta es un hallazgo con su número, el riesgo que implica y la regla o transformación que lo atiende.</p>
-    <p>Rojo = riesgo que se limpia en la transformación. Ámbar = riesgo que se monitorea. Azul = limitación estructural que documentamos.</p>
-    <div class="q"><strong>Si preguntan «¿por qué la cobertura del cruce es baja?»</strong>: el 38% de los premios no tiene artista y muchas categorías no son canciones. Lo medimos en cada ejecución; no lo escondemos.</div>
+    <p>Profiling only describes; it never changes the data. Each card is a finding with its number, the risk it creates and the rule or transformation that handles it.</p>
+    <p>Red = risk cleaned in the transformation. Amber = risk that is monitored. Blue = structural limitation that we document.</p>
+    <div class="q"><strong>If asked “why is the match coverage low?”</strong>: 38% of awards have no artist and many categories are not songs. We measure it on every run; we do not hide it.</div>
   </aside>
 </section>
 
@@ -372,7 +372,7 @@ load_dw_task(prep)</pre>
             <tr><td class="mono">RAW-GRM-02 · 04</td><td>Grammy raw</td><td>nominee populated · row-count band 4k–10k</td><td>≥ 99.5% · band</td><td><span class="pill w">Warning</span> <span class="pill i">Info</span></td></tr>
             <tr><td class="mono">PREP-02 · 04</td><td>prepared</td><td>keys not null; ranges hold after transform</td><td>100%</td><td><span class="pill c">Critical</span></td></tr>
             <tr><td class="mono">PREP-05</td><td>prepared</td><td>fact grain unique</td><td>0 duplicates</td><td><span class="pill c">Critical</span></td></tr>
-            <tr><td class="mono">PREP-06 · 07</td><td>prepared</td><td>matched ⇒ valid year &amp; award_count ≥ 1; unmatched ⇒ year 0; both tiers exist</td><td>100%</td><td><span class="pill c">Critical</span></td></tr>
+            <tr><td class="mono">PREP-06 · 07</td><td>prepared</td><td>matched ⇒ valid year &amp; award_count ≥ 1; unmatched ⇒ year 0; both tiers exist; matched rows ≥ 0.1%</td><td>100% · ≥ 0.1%</td><td><span class="pill c">Critical</span></td></tr>
             <tr><td class="mono">PREP-08 · 01</td><td>prepared</td><td>match rate plausible · flag is boolean</td><td>≤ 5% · set</td><td><span class="pill w">Warning</span> <span class="pill i">Info</span></td></tr>
           </tbody>
         </table>
@@ -392,10 +392,10 @@ load_dw_task(prep)</pre>
     </div>
   </div>
   <aside class="notes">
-    <p>Son 18 reglas, más del mínimo de 6. No buscamos simetría por dataset: la cobertura sigue los riesgos y los requisitos.</p>
-    <p>Explica una regla de cada severidad. La de duración muestra cómo se justifica un umbral: no lo elegimos para que pase el lote actual, sino para tolerar corrupción aislada y detener un error sistemático.</p>
-    <p>Las reglas del nivel preparado verifican invariantes posteriores a la transformación (rangos sin tolerancia, grano único) y la integridad de la integración.</p>
-    <div class="q"><strong>Trampa</strong>: «¿Modifican datos para que pase la validación?» No. La validación detecta; la transformación aplica reglas justificadas por sí mismas (TR-xx).</div>
+    <p>18 rules, well above the minimum of six. We did not force symmetry per dataset: coverage follows the risks and the requirements.</p>
+    <p>Explain one rule of each severity. The duration rule shows how a threshold is justified: it is not chosen so that the current batch passes, but to tolerate isolated corruption and stop a systematic error.</p>
+    <p>Prepared-layer rules check post-transformation invariants (ranges with no tolerance, unique grain) and integration integrity, including a minimum match rate.</p>
+    <div class="q"><strong>Trap</strong>: “Do you change data so validation passes?” No. Validation detects; transformation applies rules that are justified on their own (TR-xx).</div>
   </aside>
 </section>
 
@@ -420,8 +420,9 @@ load_dw_task(prep)</pre>
           <tbody>
             <tr><td class="mono">test_a_success</td><td>spotify_raw_suite</td><td class="num">9 / 9</td><td><span class="pill s">Continue</span></td></tr>
             <tr><td class="mono">test_a_success</td><td>grammys_raw_suite</td><td class="num">4 / 4</td><td><span class="pill s">Continue</span></td></tr>
-            <tr><td class="mono">test_a_success</td><td>prepared_music_suite</td><td class="num">18 / 18</td><td><span class="pill s">Continue</span></td></tr>
+            <tr><td class="mono">test_a_success</td><td>prepared_music_suite</td><td class="num">19 / 19</td><td><span class="pill s">Continue</span></td></tr>
             <tr><td class="mono">test_b_controlled…</td><td>grammys_raw_suite</td><td class="num">3 / 4</td><td><span class="pill c">Stop</span></td></tr>
+            <tr><td class="mono">test_e_prepared…</td><td>prepared_music_suite</td><td class="num">18 / 19</td><td><span class="pill c">Stop</span></td></tr>
           </tbody>
         </table>
         <div class="card"><h3>Design choices</h3><ul><li>One generic <code>run_gate()</code>: same chain for the 3 gates</li><li>Ephemeral context per task: the two raw gates run in parallel with no shared-file race; config exported to <code>gx/</code></li><li>Results are per run and never overwritten, so success <em>and</em> failure evidence coexist</li></ul></div>
@@ -440,14 +441,14 @@ load_dw_task(prep)</pre>
       <span class="k">"expectation_type"</span>: <span class="s">"expect_column_values_to_be_between"</span>,
       <span class="k">"success"</span>: <span class="f">false</span>, <span class="k">"element_count"</span>: 4811,
       <span class="k">"unexpected_count"</span>: <span class="f">1</span>, <span class="k">"partial_unexpected_list"</span>: [<span class="f">1800</span>] }, … ] }</pre>
-        <div class="card info"><p><strong>Mapping:</strong> every one of the 31 expectations → Rule ID in <code>docs/quality_rules.md §3.1</code>. Examples: <code>expect_compound_columns_to_be_unique</code> → PREP-05; <code>row_condition="is_grammy_winner==True"</code> → PREP-06.</p></div>
+        <div class="card info"><p><strong>Mapping:</strong> every one of the 32 expectations → Rule ID in <code>docs/quality_rules.md §3.1</code>. Examples: <code>expect_compound_columns_to_be_unique</code> → PREP-05; <code>row_condition="is_grammy_winner==True"</code> → PREP-06.</p></div>
       </div>
     </div>
   </div>
   <aside class="notes">
-    <p>Este es el criterio de mayor peso individual después de Airflow (0,80). Explica la cadena completa, que el PDF pide poder explicar: qué dato se valida, qué suite aplica, cómo la Validation Definition los une y cómo el Checkpoint ejecuta y registra.</p>
-    <p>El resultado no es un booleano: es evidencia por regla, con conteo de inesperados y valores de ejemplo. Muestra el JSON de la prueba B: aparece el 1800 y la regla exacta.</p>
-    <div class="q"><strong>Si preguntan «¿por qué contexto efímero?»</strong>: las dos compuertas raw corren en paralelo. Un contexto de archivo compartido escribiría <code>great_expectations.yml</code> a la vez desde dos procesos. La configuración igual queda exportada en <code>gx/</code> en cada ejecución.</div>
+    <p>The highest single weight after Airflow (0.80). Explain the full chain, as the brief requires: which data object is validated, which suite applies, how the Validation Definition links them and how the Checkpoint runs and records the result.</p>
+    <p>The result is not a Boolean: it is per-rule evidence with unexpected counts and sample values. Show the Test B JSON: the value 1800 and the exact rule appear.</p>
+    <div class="q"><strong>If asked “why an ephemeral context?”</strong>: the two raw gates run in parallel. A shared file context would write <code>great_expectations.yml</code> from two processes at once. The configuration is still exported to <code>gx/</code> on every run.</div>
   </aside>
 </section>
 
@@ -494,9 +495,9 @@ load_dw_task(prep)</pre>
     </div>
   </div>
   <aside class="notes">
-    <p>Primero la conciliación: 114.000 − 1 − 450 = 113.549 filas preparadas, que son exactamente las filas de la tabla de hechos. Cada número sale del <code>integration_report.json</code> de la ejecución.</p>
-    <p>Luego el contrato: llave, cardinalidad, tratamiento de los no cruzados y de los cruces duplicados. La cardinalidad no es solo una declaración: pandas la valida y la tarea falla si se viola.</p>
-    <div class="q"><strong>Si preguntan «¿por qué no fuzzy matching?»</strong>: produce falsos positivos que no se pueden auditar. Preferimos cruce exacto sobre una llave normalizada y medir la cobertura.</div>
+    <p>Start with reconciliation: 114,000 − 1 − 450 = 113,549 prepared rows, exactly the fact rows. Every number comes from the run's <code>integration_report.json</code>.</p>
+    <p>Then the contract: key, cardinality, unmatched handling and duplicate matches. Cardinality is not just declared: pandas validates it and the task fails if it is violated.</p>
+    <div class="q"><strong>If asked “why no fuzzy matching?”</strong>: it creates false positives that cannot be audited. We prefer an exact match on a normalized key and we measure the coverage.</div>
   </aside>
 </section>
 
@@ -536,9 +537,9 @@ load_dw_task(prep)</pre>
     </div>
   </div>
   <aside class="notes">
-    <p>Proceso de negocio: el desempeño de un track en su género, enriquecido con su reconocimiento Grammy. Di el grano en una frase exacta, porque es lo primero que preguntan.</p>
-    <p>Las claves sustitutas permiten miembros por defecto; las claves de negocio con UNIQUE son las que hacen idempotentes los upserts de la re-ejecución.</p>
-    <div class="q"><strong>Corrección que hicimos</strong>: antes los KPIs promediaban filas de hechos y contaban varias veces una canción que aparece en varios géneros. Ahora <code>vw_track_profile</code> agrupa por track; por eso el % explícito de los 2010s pasó de 15,3% a 20,2%.</div>
+    <p>Business process: a track's performance in its genre, enriched with its Grammy recognition. State the grain in one exact sentence; it is usually the first question.</p>
+    <p>Surrogate keys allow default members; the UNIQUE business keys are what make the rerun upserts idempotent.</p>
+    <div class="q"><strong>A correction we made</strong>: earlier KPIs averaged fact rows and counted a song that appears in several genres more than once. <code>vw_track_profile</code> now groups by track, which is why the 2010s explicit share moved from 15.3% to 20.2%.</div>
   </aside>
 </section>
 
@@ -555,15 +556,15 @@ load_dw_task(prep)</pre>
           <thead><tr><th>Task class</th><th>Failure type</th><th>Retries</th><th>Why</th></tr></thead>
           <tbody>
             <tr><td><code>extract_spotify</code><br><code>extract_grammys</code></td><td>Transient: I/O, DB refusing connections</td><td class="mono"><strong>2</strong> · 15 s · exp. backoff (≤ 2 min)</td><td>Same input + same code can succeed later. <strong>Proved in Test D.</strong></td></tr>
-            <tr><td><code>validate_*</code> (3 gates)</td><td>Deterministic data / contract</td><td class="mono"><strong>0</strong></td><td>The same batch fails the same way. Fail fast with evidence. <strong>Test B.</strong></td></tr>
+            <tr><td><code>validate_*</code> (3 gates)</td><td>Deterministic data / contract</td><td class="mono"><strong>0</strong></td><td>The same batch fails the same way. Fail fast with evidence. <strong>Tests B and E.</strong></td></tr>
             <tr><td><code>transform_and_integrate</code></td><td>Deterministic code / cardinality</td><td class="mono"><strong>0</strong></td><td>A traceback is reproducible; retrying hides nothing.</td></tr>
             <tr><td><code>load_dw</code></td><td>Transient: lock timeout, connection drop</td><td class="mono"><strong>1</strong> · 30 s</td><td>One atomic transaction, so a retry is safe; a single attempt limits repeated heavy loads.</td></tr>
           </tbody>
         </table>
         <div class="card"><p><code>DEFAULT_ARGS = {"retries": 0}</code>: there is no blanket <code>retries=3</code>. Each task opts in according to its failure class. Full condition table in <code>docs/architecture.md §3</code>.</p></div>
         <div class="row grow">
-          <figure class="shot contain" style="width:42%" data-full="%%FULL:overview%%"><img src="%%IMG:overview_crop%%" alt="Airflow grid with the four test runs side by side: A, C, B with a failed gate, D"><figcaption>Grid · runs A · C · B · D</figcaption></figure>
-          <div class="card grow"><h3>Reading the grid</h3><p>Columns are runs A, C, B and D. In run B, <code>validate_grammys_raw</code> is red and the three downstream cells are orange (<code>upstream_failed</code>). In run D everything is green, even though <code>extract_grammys</code> needed two tries.</p></div>
+          <figure class="shot contain" style="width:42%" data-full="%%FULL:overview%%"><img src="%%IMG:overview_crop%%" alt="Airflow grid with the four test runs side by side: A, C, B with a failed gate, D"><figcaption>Grid · runs A · C · B · D · E</figcaption></figure>
+          <div class="card grow"><h3>Reading the grid</h3><p>Columns are runs A, C, B, D and E. In B the raw gate is red and three cells are orange (<code>upstream_failed</code>); in E the raw gates pass, <code>validate_prepared</code> is red and only <code>load_dw</code> is orange. D is all green although <code>extract_grammys</code> needed two tries.</p></div>
         </div>
       </div>
       <div class="col grow">
@@ -584,10 +585,10 @@ load_dw_task(prep)</pre>
     </div>
   </div>
   <aside class="notes">
-    <p>Es el criterio de mayor peso (0,90). La idea central: un reintento solo tiene sentido si otro intento puede salir distinto sin cambiar la entrada ni el código.</p>
-    <p>Por eso las extracciones y la carga reintentan, y las compuertas y la transformación no. La prueba D demuestra el primer caso; la B, el segundo.</p>
-    <p>Para la observabilidad, recorre las cinco preguntas del PDF: qué corrió, cuándo, si funcionó, dónde y por qué falló, y qué pasó después.</p>
-    <div class="q"><strong>Si preguntan «¿por qué la carga solo tiene 1 reintento?»</strong>: es la tarea más pesada. Un reintento cubre un bloqueo puntual; si vuelve a fallar, el problema ya no es transitorio.</div>
+    <p>The highest-weighted criterion (0.90). The core idea: a retry only makes sense when another attempt can succeed without changing the input or the code.</p>
+    <p>That is why extraction and the load retry, while the gates and the transformation do not. Test D proves the first case; Tests B and E prove the second.</p>
+    <p>For observability, walk the five questions of the brief: what ran, when, did it succeed, where and why it failed, and what happened next.</p>
+    <div class="q"><strong>If asked “why only one retry for the load?”</strong>: it is the heaviest task. One retry covers a short lock; if it fails again the problem is no longer transient.</div>
   </aside>
 </section>
 
@@ -626,11 +627,11 @@ load_dw_task(prep)</pre>
         <figure class="shot grow contain" data-full="%%FULL:c2%%"><img src="%%IMG:c2_crop%%" alt="Expected result: inserted 0, updated 113,549"><figcaption>expected</figcaption></figure>
       </div>
     </div>
-    <div class="card"><p><strong>Everything is reproducible:</strong> <code>bash scripts/run_reliability_tests.sh</code> runs A → C → B → D in about 6 minutes and regenerates the evidence. If the live environment fails, the screenshots on the next four slides come from exactly that script.</p></div>
+    <div class="card"><p><strong>Everything is reproducible:</strong> <code>bash scripts/run_reliability_tests.sh</code> runs A → C → B → D → E in about 8 minutes and regenerates the evidence. If the live environment fails, the screenshots on the next five slides come from exactly that script.</p></div>
   </div>
   <aside class="notes">
-    <p>La rúbrica de la presentación da 0,30 a la demostración. Lleva el entorno levantado <strong>antes</strong> de entrar (<code>docker compose up -d</code>) y el navegador abierto en Airflow.</p>
-    <ul><li>Orden: éxito (≈1 min) → inyección y fallo (≈1 min) → limpieza y re-ejecución.</li><li>Ten copiados los comandos SQL. Puerto de Airflow en tu máquina: 8082 (8080 por defecto).</li><li>Si algo falla en vivo, pasa a las capturas: son de las mismas ejecuciones.</li></ul>
+    <p>The presentation rubric gives 0.30 to the demonstration. Start the environment <strong>before</strong> entering the room (<code>docker compose up -d</code>) and keep Airflow open in the browser.</p>
+    <ul><li>Order: success (about 1 min) → injection and failure (about 1 min) → cleanup and rerun.</li><li>Have the SQL commands ready to paste. Airflow port: 8080 by default (8082 on the presenter's machine).</li><li>If anything fails live, switch to the screenshots: they come from the same runs.</li></ul>
   </aside>
 </section>
 
@@ -638,15 +639,15 @@ load_dw_task(prep)</pre>
 <section class="slide" data-stage="all" data-rubric="Successful run evidence · Test A §7.1" data-title="Test A · success">
   <div class="body">
     <div class="head">
-      <div class="kicker">Test A · run test_a_success · 2026-10-12 00:24:53 → 00:25:50 UTC</div>
+      <div class="kicker">Test A · run test_a_success · 2026-10-12 01:31:09 → 01:31:45 UTC</div>
       <h2>Every stage succeeds, and every row is accounted for</h2>
     </div>
     <div class="row grow">
       <figure class="shot" style="width:57%" data-full="%%FULL:a1%%"><img src="%%IMG:a1%%" alt="Airflow run page with seven successful task instances"><figcaption>Grid + task instances · all success</figcaption></figure>
       <div class="col grow">
         <div class="g2">
-          <div class="card stat"><div class="n ok">7/7</div><div class="l">tasks success · ≈ 57 s</div></div>
-          <div class="card stat"><div class="n ok">31/31</div><div class="l">expectations passed (9 · 4 · 18)</div></div>
+          <div class="card stat"><div class="n ok">7/7</div><div class="l">tasks success · ≈ 36 s</div></div>
+          <div class="card stat"><div class="n ok">32/32</div><div class="l">expectations passed (9 · 4 · 19)</div></div>
           <div class="card stat"><div class="n">113,549</div><div class="l">inserted = prepared rows</div></div>
           <div class="card stat"><div class="n">475</div><div class="l">winner rows · 282 tracks</div></div>
         </div>
@@ -655,8 +656,8 @@ load_dw_task(prep)</pre>
     </div>
   </div>
   <aside class="notes">
-    <p>Lo que pide el PDF para la prueba A: extracción, compuertas, transformación con evidencia de conciliación, compuerta preparada y carga con resumen de filas, y que el dashboard refleje el DW.</p>
-    <p>Señala en el log: estado del DW antes de la carga (vacío porque lo reconstruimos), filas insertadas, actualizadas y purgadas, y que las filas de hechos igualan a las preparadas.</p>
+    <p>What the brief expects from Test A: extraction, gates, transformation with reconciliation evidence, the prepared gate, a load with a row summary, and a dashboard that reflects the DW.</p>
+    <p>Point at the log: DW state before the load (empty, because we rebuilt it), rows inserted, updated and purged, and fact rows equal to prepared rows.</p>
   </aside>
 </section>
 
@@ -694,9 +695,9 @@ load_dw_task(prep)</pre>
     </div>
   </div>
   <aside class="notes">
-    <p>El PDF pide cinco evidencias: vista Graph o Grid, estado fallido, resultado de GX, log de la tarea fallida y explicación escrita. Las cinco están en esta lámina.</p>
-    <p>Punto fino: insertamos la fila en la base de datos, no en el CSV. Eso además demuestra que el pipeline lee los Grammy desde PostgreSQL.</p>
-    <p>La extracción no limpia: deja pasar la fila inválida para que la compuerta la vea. Esconder el problema en la extracción sería un antipatrón.</p>
+    <p>The brief asks for five pieces of evidence: Graph or Grid view, failed task state, GX result, failed task log and a written explanation. All five are on this slide.</p>
+    <p>Subtle point: we inserted the row in the database, not in the CSV. That also proves the pipeline reads Grammy data from PostgreSQL.</p>
+    <p>Extraction does not clean: it lets the invalid row through so the gate can see it. Hiding the problem during extraction would be an anti-pattern.</p>
   </aside>
 </section>
 
@@ -746,9 +747,9 @@ load_dw_task(prep)</pre>
     </div>
   </div>
   <aside class="notes">
-    <p>El PDF pide cuatro cosas: la estrategia, las llaves o lógica de carga, la comparación antes y después, y qué pasa con una ejecución parcial. Ve en ese orden.</p>
-    <p>Lee la línea clave: 0 insertadas, 113.549 actualizadas, 0 purgadas. Todas las medidas son idénticas; solo cambia el <code>batch_id</code>.</p>
-    <div class="q"><strong>Si preguntan «¿por qué no truncate and load?»</strong>: también es válido. Elegimos upsert + purga en una transacción porque nunca deja la tabla vacía para los lectores y deja contar inserciones y actualizaciones como evidencia.</div>
+    <p>The brief asks for four things: the strategy, the keys or load logic, a before/after comparison, and what happens after a partial run. Go in that order.</p>
+    <p>Read the key line: 0 inserted, 113,549 updated, 0 purged. All measures are identical; only <code>batch_id</code> changes.</p>
+    <div class="q"><strong>If asked “why not truncate-and-load?”</strong>: also valid. We chose upsert + purge in one transaction because readers never see an empty table and we can count inserts and updates as evidence.</div>
   </aside>
 </section>
 
@@ -764,20 +765,57 @@ load_dw_task(prep)</pre>
       <figure class="shot natural" style="width:calc(50% - 12px)" data-full="%%FULL:d3%%"><img src="%%IMG:d3_crop%%" alt="extract_grammys try 2 success, 4,810 records extracted"><figcaption>try 2 · success · 4,810 records</figcaption></figure>
     </div>
     <div class="g4">
-      <div class="card"><h3>00:28:54</h3><p><code>ALTER DATABASE source_music_db ALLOW_CONNECTIONS false</code></p></div>
-      <div class="card fail"><h3>00:29:01 · try 1</h3><p><code>database "source_music_db" is not currently accepting connections</code> → <strong>up_for_retry</strong></p></div>
-      <div class="card"><h3>00:29:12</h3><p>connections restored (outage over)</p></div>
-      <div class="card ok"><h3>00:29:30 · try 2</h3><p>4,810 rows extracted → the remaining 6 tasks succeed; load is idempotent (0 inserted)</p></div>
+      <div class="card"><h3>01:33:24</h3><p><code>ALTER DATABASE source_music_db ALLOW_CONNECTIONS false</code></p></div>
+      <div class="card fail"><h3>01:33:28 · try 1</h3><p><code>database "source_music_db" is not currently accepting connections</code> → <strong>up_for_retry</strong></p></div>
+      <div class="card"><h3>01:33:34</h3><p>connections restored (outage over)</p></div>
+      <div class="card ok"><h3>01:33:57 · try 2</h3><p>4,810 rows extracted → the remaining 6 tasks succeed; load is idempotent (0 inserted)</p></div>
     </div>
   </div>
   <aside class="notes">
-    <p>El PDF acepta evidencia de reintentos o una justificación de las tareas sin reintento. Damos las dos: esta prueba más la tabla de política.</p>
-    <p>Simulamos una caída real: la base está viva, pero rechaza conexiones nuevas, como durante un reinicio o con el pool lleno. El primer intento falla, Airflow espera el retraso con backoff y el segundo intento funciona sin cambiar nada.</p>
-    <p>Contrasta con la prueba B: allí reintentar no habría servido, porque el dato malo sigue ahí.</p>
+    <p>The brief accepts selective-retry evidence or a justification of the tasks without retries. We provide both: this test and the policy table.</p>
+    <p>We simulated a real outage: the database is alive but refuses new connections, as during a restart or with a full pool. Try 1 fails, Airflow waits with backoff, and try 2 succeeds without changing anything.</p>
+    <p>Contrast with Test B: retrying would not have helped there, because the bad data is still in the source.</p>
   </aside>
 </section>
 
-<!-- ============================ 15 · DASHBOARD ============================ -->
+<!-- ============================ 15 · TEST E ============================ -->
+<section class="slide" data-stage="tr,prep" data-rubric="Prepared gate gates load_dw · §6.9" data-title="Test E · prepared gate">
+  <div class="body">
+    <div class="head">
+      <div class="kicker">Test E · run test_e_prepared_gate · rule DQ-PREP-INT-07 [Critical]</div>
+      <h2>The prepared gate stops a broken integration before the load</h2>
+    </div>
+    <div class="row grow">
+      <div class="col" style="width:56%">
+        <figure class="shot natural" data-full="%%FULL:e1%%"><img src="%%IMG:e1_crop%%" alt="Airflow graph: raw gates and transformation green, validate_prepared failed, load_dw upstream_failed"><figcaption>Graph · prepared gate failed, load blocked</figcaption></figure>
+        <figure class="shot natural" data-full="%%FULL:e2%%"><img src="%%IMG:e2_crop%%" alt="validate_prepared log showing the Critical failure of DQ-PREP-INT-07"><figcaption>validate_prepared log</figcaption></figure>
+<pre><span class="k">UPDATE</span> grammy_awards <span class="k">SET</span> artist = artist || <span class="s">' [credits v2]'</span>;   <span class="c">-- upstream format change</span>
+<span class="c">-- raw gates: year, nominee, schema, volume still valid  → CONTINUE</span>
+<span class="c">-- matched rows 475 → %%E_MATCHED%%  (0.42% → %%E_RATE%%)       → prepared gate STOP</span></pre>
+      </div>
+      <div class="col grow">
+        <table>
+          <thead><tr><th>Stage</th><th>Observed</th></tr></thead>
+          <tbody>
+            <tr><td>both extracts + both raw gates</td><td><span class="pill s">success</span> nothing looks wrong at the source level</td></tr>
+            <tr><td><code>transform_and_integrate</code></td><td><span class="pill s">success</span> but only <strong>%%E_MATCHED%%</strong> matched rows</td></tr>
+            <tr><td><code>validate_prepared</code></td><td><span class="pill c">failed</span> DQ-PREP-INT-07: matched rows ≥ 0.1% of the catalog</td></tr>
+            <tr><td><code>load_dw</code></td><td><span class="pill w">upstream_failed</span> DW keeps the previous good snapshot</td></tr>
+          </tbody>
+        </table>
+        <div class="card fail"><h3>Why this is Critical</h3><p>Below about 114 matched rows, KPI-02 has no genre with n ≥ 5 and KPI-01 compares the catalog against a handful of songs. A 4× drop from the usual 0.42% means the match key broke, not that the music changed.</p></div>
+        <div class="card info"><h3>What the test taught us</h3><p>The first time we ran it, the gate only required “at least one match” and the degraded batch reached the DW. We added the 0.1% floor and reran Tests A–E. Testing the gate is part of the system.</p></div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>Section 6.9 requires proof that <code>load_dw</code> is gated by the Critical outcome of the <em>prepared</em> gate. Test B stops at the raw gate; Test E is the case where the raw data looks fine but the transformation output does not.</p>
+    <p>We simulated an upstream format change: every Grammy artist credit gained a suffix. Year, nominee, schema and volume are still valid, so both raw gates pass. But almost no key matches any more (475 → 71 rows), and the minimum match-rate rule DQ-PREP-INT-07 stops the batch before the load.</p>
+    <div class="q"><strong>Honest story</strong>: when we first ran this test, the prepared gate only required “at least one match”, and the degraded batch got through. We added the 0.1% floor, justified by KPI-02 (genres need n ≥ 5), and reran every test. That is exactly what the test was for.</div>
+  </aside>
+</section>
+
+<!-- ============================ 16 · DASHBOARD ============================ -->
 <section class="slide" data-stage="bi" data-rubric="KPI queries &amp; DW-backed dashboard · <b>0.40</b>" data-title="Dashboard &amp; KPIs">
   <div class="body">
     <div class="head">
@@ -795,13 +833,13 @@ load_dw_task(prep)</pre>
     </div>
   </div>
   <aside class="notes">
-    <p>Cada visualización responde a un requisito y consulta el DW, no el CSV, como exige el PDF.</p>
-    <p>Lee los hallazgos con cautela estadística: hay asociación, no causalidad (la popularidad es una sola foto de 2022), y los géneros con n pequeño son inestables. Por eso mostramos el n.</p>
-    <div class="q"><strong>Si preguntan por la herramienta</strong>: Metabase no está en la lista del PDF; pedimos aprobación. La lógica vive en vistas SQL del DW, así que Tableau o Power BI se conectan a lo mismo sin rehacer nada.</div>
+    <p>Every visualization answers a requirement and queries the DW, never the CSV, as the brief requires.</p>
+    <p>Read the findings with statistical care: this is association, not causation (popularity is a single 2022 snapshot), and genres with a small n are unstable. That is why n is always shown.</p>
+    <div class="q"><strong>If asked about the tool</strong>: Metabase is not in the brief's named list, so instructor approval was requested. The logic lives in SQL views in the DW, so Tableau or Power BI connect to the same thing without rework.</div>
   </aside>
 </section>
 
-<!-- ============================ 16 · TRACEABILITY ============================ -->
+<!-- ============================ 17 · TRACEABILITY ============================ -->
 <section class="slide" data-stage="all" data-rubric="End-to-end traceability · §4.1 · §8.2" data-title="Traceability">
   <div class="body">
     <div class="head">
@@ -820,12 +858,12 @@ load_dw_task(prep)</pre>
     </div>
   </div>
   <aside class="notes">
-    <p>El PDF insiste en que cada decisión debe poder recorrerse por la cadena completa. Toma una fila (RQ-03) y léela de izquierda a derecha.</p>
-    <p>Cierra con la idea de que los IDs no son decoración: aparecen en el código, en los resultados de GX y en las evidencias, así que cualquier evaluador puede seguir el hilo.</p>
+    <p>The brief insists that every decision can be followed through the full chain. Pick one row (RQ-03) and read it left to right.</p>
+    <p>Close with the point that the IDs are not decoration: they appear in the code, in the GX results and in the evidence, so any evaluator can follow the thread.</p>
   </aside>
 </section>
 
-<!-- ============================ 17 · REPOSITORY ============================ -->
+<!-- ============================ 18 · REPOSITORY ============================ -->
 <section class="slide" data-stage="all" data-rubric="Repository &amp; documentation · <b>0.30</b>" data-title="Repository &amp; reproducibility">
   <div class="body">
     <div class="head">
@@ -874,13 +912,13 @@ docs/evidence/
     </div>
   </div>
   <aside class="notes">
-    <p>Rúbrica del repositorio (0,30): estructura, reproducibilidad, README, evidencia, higiene de seguridad y calidad de código.</p>
-    <p>Dato fuerte: probamos la reproducibilidad borrando el volumen y levantando todo de nuevo sin pasos manuales.</p>
-    <p>Seguridad: detectamos que una contraseña vieja estaba en el historial de git y la rotamos antes de publicar.</p>
+    <p>Repository rubric (0.30): structure, reproducibility, README, evidence, security hygiene and code quality.</p>
+    <p>Strong fact: reproducibility was tested by deleting the database volume and rebuilding everything with no manual steps.</p>
+    <p>Security: an old password was found in the git history and was rotated before publishing.</p>
   </aside>
 </section>
 
-<!-- ============================ 18 · LIMITATIONS & CLOSE ============================ -->
+<!-- ============================ 19 · LIMITATIONS & CLOSE ============================ -->
 <section class="slide" data-stage="all" data-rubric="Assumptions &amp; limitations · conclusion" data-title="Limitations &amp; conclusion">
   <div class="body">
     <div class="head">
@@ -907,13 +945,13 @@ docs/evidence/
         <table>
           <thead><tr><th>Rubric criterion</th><th class="num">Pts</th><th>Where we prove it</th></tr></thead>
           <tbody>
-            <tr><td>Requirements &amp; architecture</td><td class="num">0.40</td><td>slides 2–3 · traceability 16</td></tr>
+            <tr><td>Requirements &amp; architecture</td><td class="num">0.40</td><td>slides 2–3 · traceability 17</td></tr>
             <tr><td>Profiling &amp; quality risks</td><td class="num">0.60</td><td>slides 4–5 · executed notebook</td></tr>
             <tr><td>Transformation &amp; integration</td><td class="num">0.60</td><td>slide 7 · integration_report.json</td></tr>
             <tr><td>Great Expectations</td><td class="num">0.80</td><td>slide 6 · per-run JSON · gx/</td></tr>
-            <tr><td>Airflow &amp; reliability</td><td class="num">0.90</td><td>slides 9–14 · Tests A–D</td></tr>
-            <tr><td>Dimensional DW &amp; analytics</td><td class="num">0.40</td><td>slides 8, 15 · KPI views</td></tr>
-            <tr><td>Repository &amp; documentation</td><td class="num">0.30</td><td>slide 17 · README · evidence register</td></tr>
+            <tr><td>Airflow &amp; reliability</td><td class="num">0.90</td><td>slides 9–15 · Tests A–E</td></tr>
+            <tr><td>Dimensional DW &amp; analytics</td><td class="num">0.40</td><td>slides 8, 16 · KPI views</td></tr>
+            <tr><td>Repository &amp; documentation</td><td class="num">0.30</td><td>slide 18 · README · evidence register</td></tr>
           </tbody>
         </table>
         <div class="big-quote" style="margin-top:6px">Reliable does not mean nothing fails. It means failures are anticipated, controlled and observable.</div>
@@ -921,12 +959,12 @@ docs/evidence/
     </div>
   </div>
   <aside class="notes">
-    <p>Cierre (≈40 s): nombra las limitaciones antes de que las pregunten; eso muestra criterio.</p>
-    <p>Luego la tabla: cada criterio de la rúbrica tiene una lámina y un artefacto que lo prueba. Termina con la frase del PDF y abre a preguntas. Las láminas de respaldo con respuestas vienen a continuación.</p>
+    <p>Closing (about 40 s): state the limitations before anyone asks; it shows judgement.</p>
+    <p>Then the table: each rubric criterion has a slide and an artifact that proves it. End with the brief's sentence and open the floor to questions. The backup slide with answers comes next.</p>
   </aside>
 </section>
 
-<!-- ============================ 19 · Q&A BACKUP ============================ -->
+<!-- ============================ 20 · Q&A BACKUP ============================ -->
 <section class="slide" data-stage="all" data-rubric="Technical understanding in Q&amp;A · <b>0.25</b>" data-title="Backup · Q&amp;A">
   <div class="body">
     <div class="head">
@@ -934,19 +972,19 @@ docs/evidence/
       <h2>Short answers to hard questions</h2>
     </div>
     <div class="qa">
-      <div><h3>Why are validation tasks not retried?</h3><p>Data-quality failures are deterministic: the same batch reproduces the same violation. Retrying only delays the evidence (Test B). Transient classes do retry (Test D).</p></div>
+      <div><h3>Why are validation tasks not retried?</h3><p>Data-quality failures are deterministic: the same batch reproduces the same violation. Retrying only delays the evidence (Tests B, E). Transient classes do retry (Test D).</p></div>
       <div><h3>Why not pass DataFrames through XCom?</h3><p>XCom lives in the Airflow metadata DB and is meant for coordination. Tasks pass Parquet paths and small dicts; data is persisted per run for investigation.</p></div>
       <div><h3>Validation vs transformation?</h3><p>Validation measures and records; transformation applies rules that stand on their own (TR-xx). We never change data to make a check pass. Values that cannot be repaired are dropped and counted, not imputed.</p></div>
       <div><h3>What if load_dw fails halfway?</h3><p>One transaction: everything rolls back, and the previous snapshot stays. The retry or the next run converges because the load is idempotent.</p></div>
       <div><h3>Why a LEFT join and many-to-one?</h3><p>Non-awarded tracks are the comparison group. Aggregating Grammy rows per key first makes duplicate matches impossible, and <code>validate="many_to_one"</code> enforces it.</p></div>
       <div><h3>How did you pick thresholds?</h3><p>From profiling and the requirement they protect: e.g. duration ≥ 99.9% tolerates one corrupted row but stops a systemic error; match rate ≤ 5% flags a key that became too loose.</p></div>
-      <div><h3>Why is coverage so low? Is the integration wrong?</h3><p>The prepared gate proves the integration is coherent (PREP-06/07). Low coverage is structural (38% without artist, non-song categories), and it is measured every run.</p></div>
+      <div><h3>Why is coverage so low? Is the integration wrong?</h3><p>The prepared gate checks the integration is coherent (PREP-06) and has a minimum match rate (PREP-07, proven in Test E). Low coverage is structural (38% without artist, non-song categories), and it is measured every run.</p></div>
       <div><h3>Why PostgreSQL and not SQLite?</h3><p>The brief forbids SQLite. PostgreSQL gives transactions, <code>ON CONFLICT</code> upserts, <code>CHECK</code> constraints and concurrent access for Airflow, Metabase and the pipeline.</p></div>
     </div>
   </div>
   <aside class="notes">
-    <p>Lámina de respaldo: no la presentes, úsala para responder. La rúbrica da 0,25 a la comprensión técnica en las preguntas.</p>
-    <p>Regla de oro al responder: primero la decisión, luego la razón y por último la evidencia (archivo o prueba).</p>
+    <p>Backup slide: do not present it, use it to answer. The rubric gives 0.25 to technical understanding during questions.</p>
+    <p>Rule of thumb when answering: first the decision, then the reason, then the evidence (a file or a test).</p>
   </aside>
 </section>
 

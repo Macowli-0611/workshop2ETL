@@ -1,6 +1,6 @@
-# Git Ignore para Workshop-2 ETL
+# Git ignore rules for Workshop-2 ETL
 
-# Entorno y variables secretas
+# Environment and secrets
 .env
 *.env
 !.env.example
@@ -42,7 +42,7 @@ airflow.db
 webserver_config.py
 *.pid
 
-# Great Expectations datos locales / uncommitted
+# Great Expectations local / uncommitted data
 gx/uncommitted/
 great_expectations/uncommitted/
 
@@ -56,3 +56,6 @@ data/processed/
 # Sistema Operativo
 .DS_Store
 Thumbs.db
+
+# Early planning notes (superseded by docs/); kept locally only
+docs/planning/

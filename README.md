@@ -9,7 +9,7 @@ A reliable batch pipeline that integrates the **Spotify catalog (CSV)** with the
 | | |
 | :--- | :--- |
 | Orchestration | Airflow 3.1.8, `from airflow.sdk import dag, task` → [`dags/reliable_music_pipeline.py`](dags/reliable_music_pipeline.py) |
-| Validation | GX 1.x: 3 suites, 3 Validation Definitions, 3 Checkpoints, 18 rules → [`src/validation.py`](src/validation.py), [`gx/`](gx/) |
+| Validation | GX 1.x: 3 suites, 3 Validation Definitions, 3 Checkpoints, 18 rules / 32 expectations → [`src/validation.py`](src/validation.py), [`gx/`](gx/) |
 | Databases | PostgreSQL 16: `source_music_db` (Grammy source), `dw_music_analytics` (DW) |
 | BI | Metabase dashboard on DW views ([`docs/dashboard_spec.md`](docs/dashboard_spec.md)); Tableau alternative ([`docs/bi_tableau_guide.md`](docs/bi_tableau_guide.md)) |
 | Evidence | [`docs/evidence/evidence_register.md`](docs/evidence/evidence_register.md) |
@@ -65,7 +65,7 @@ Reproducible notebook with saved outputs and figures: [`notebooks/data_profiling
 | :--- | :--- | :--- |
 | Spotify raw | DQ-RAW-SPT-01..06 | schema contract; `track_id` not null; duration > 1,000 ms (≥ 99.9%); 4 features in [0, 1]; popularity in [0, 100]; (track, genre) duplicates < 1% (Warning) |
 | Grammy raw | DQ-RAW-GRM-01..04 | schema contract; **year in [1958, 2026]**; nominee ≥ 99.5% non-null (Warning); row-count band (Informational) |
-| Prepared | DQ-PREP-INT-01..08 | exact schema; keys not null; ranges after transform; **unique fact grain**; integration integrity (matched ⇒ valid year and award_count ≥ 1, unmatched ⇒ year 0); both tiers exist; match rate ≤ 5% (Warning) |
+| Prepared | DQ-PREP-INT-01..08 | exact schema; keys not null; ranges after transform; **unique fact grain**; integration integrity (matched ⇒ valid year and award_count ≥ 1, unmatched ⇒ year 0); both tiers exist and matched rows ≥ 0.1% (Critical); match rate ≤ 5% (Warning) |
 
 ## 7. Great Expectations validation design
 
@@ -102,14 +102,14 @@ Star schema in [`sql/dw_schema.sql`](sql/dw_schema.sql) (idempotent; applied by 
 | Task class | Retries | Why |
 | :--- | :--- | :--- |
 | `extract_spotify`, `extract_grammys` | 2, 15 s, exponential backoff (max 2 min) | Transient I/O or connection failures can succeed on another attempt. Demonstrated in **Test D**. |
-| `validate_*`, `transform_and_integrate` | 0 | Deterministic: the same batch fails the same way. Fail fast and surface the evidence. |
+| `validate_*`, `transform_and_integrate` | 0 | Deterministic: the same batch fails the same way. Fail fast and surface the evidence (Tests B and E). |
 | `load_dw` | 1, 30 s | Transient lock or connection issues; the load is one atomic transaction, so a retry is safe. |
 
 `DEFAULT_ARGS.retries = 0`; there is no blanket retry policy. Full failure-condition table: [`docs/architecture.md §3`](docs/architecture.md).
 
 ## 12. Successful execution evidence (Test A)
 
-`test_a_success`: all 7 tasks succeed (≈ 57 s). Gates 9/9, 4/4 and 18/18. Load: 113,549 inserted = prepared rows; 89,740 tracks, 17,645 artists, 114 genres. Report: [`docs/evidence/test_a_success/test_a_report.md`](docs/evidence/test_a_success/test_a_report.md).
+`test_a_success`: all 7 tasks succeed (≈ 36 s). Gates 9/9, 4/4 and 19/19. Load: 113,549 inserted = prepared rows; 89,740 tracks, 17,645 artists, 114 genres. Report: [`docs/evidence/test_a_success/test_a_report.md`](docs/evidence/test_a_success/test_a_report.md).
 
 ![Test A graph](docs/evidence/test_a_success/a2_graph_success.png)
 
@@ -119,7 +119,9 @@ Star schema in [`sql/dw_schema.sql`](sql/dw_schema.sql) (idempotent; applied by 
 
 ![Test B graph](docs/evidence/test_b_controlled_failure/b2_graph_failed_run.png)
 
-Selective retry (Test D, `test_d_transient_retry`): the source DB refuses connections, `extract_grammys` try 1 fails and try 2 succeeds → [`test_d_report.md`](docs/evidence/test_d_selective_retry/test_d_report.md).
+**Prepared gate (Test E, `test_e_prepared_gate`, §6.9):** a simulated upstream format change appends a suffix to every Grammy artist credit. Both raw gates pass, but matched rows drop from 475 to 71 (0.063%). `validate_prepared` fails on **DQ-PREP-INT-07 [Critical]** (matched rows ≥ 0.1%) and `load_dw` is `upstream_failed`; the DW keeps the previous snapshot. The first execution of this test exposed that the gate only required one match, so the floor was added and all tests were rerun → [`test_e_report.md`](docs/evidence/test_e_prepared_gate/test_e_report.md).
+
+**Selective retry (Test D, `test_d_transient_retry`):** the source DB refuses connections, `extract_grammys` try 1 fails and try 2 succeeds → [`test_d_report.md`](docs/evidence/test_d_selective_retry/test_d_report.md).
 
 ## 14. Repeatability strategy (Test C)
 
@@ -158,7 +160,7 @@ docker compose up -d --build    # postgres, airflow-init, source-seed (Grammy so
 # Run the pipeline once
 docker compose exec airflow airflow dags trigger reliable_music_pipeline
 
-# Reproduce Tests A, C, B and D with evidence (about 6 minutes)
+# Reproduce Tests A, C, B, D and E with evidence (about 8 minutes); pass letters to run a subset
 bash scripts/run_reliability_tests.sh
 
 # Build the BI dashboard and the static KPI charts
@@ -186,7 +188,7 @@ gx/                               exported Expectation Suites, Validation Defini
 notebooks/data_profiling.ipynb    executed profiling notebook
 scripts/                          seed · reliability tests · Metabase · KPI charts · log export · screenshots
 docs/                             requirements · architecture · quality rules · transformations · integration · model · dashboard · traceability
-docs/evidence/                    register · per-run JSON (runs/) · Test A–D reports, logs, screenshots · KPI outputs
+docs/evidence/                    register · per-run JSON (runs/) · Test A–E reports, logs, screenshots · KPI outputs
 data/                             original input files (unchanged)
 ```
 
@@ -201,4 +203,4 @@ data/                             original input files (unchanged)
 
 ### Defense deck
 
-[`docs/presentation.html`](docs/presentation.html) is a single-file deck with 19 slides, organized by rubric criterion, with embedded evidence screenshots. Keys: ← → to navigate, **N** for speaker notes (Spanish), **G** for overview, **F** for fullscreen; click a screenshot to zoom. A PDF export is in [`docs/presentation.pdf`](docs/presentation.pdf). To rebuild it after new evidence: `python3 scripts/build_presentation.py` (content in `scripts/presentation_template.html`).
+[`docs/presentation.html`](docs/presentation.html) is a single-file deck with 20 slides, organized by rubric criterion, with embedded evidence screenshots. Keys: ← → to navigate, **N** for speaker notes, **G** for overview, **F** for fullscreen; click a screenshot to zoom. A PDF export is in [`docs/presentation.pdf`](docs/presentation.pdf). To rebuild it after new evidence: `python3 scripts/build_presentation.py` (content in `scripts/presentation_template.html`).

@@ -1,23 +1,23 @@
-# Dependencias para ETL Workshop 2
-# Apache Airflow 3.1.8 y librerías del proyecto
+# Python dependencies for Workshop-2 ETL
+# Installed on top of apache/airflow:3.1.8-python3.11 (see Dockerfile)
 
-# Validación de datos
-great_expectations>=1.0.0
+# Data validation (GX 1.x API: suites, validation definitions, checkpoints)
+great_expectations>=1.0.0,<2.0.0
 
-# Procesamiento y datos
+# Data processing
 pandas>=2.2.0
 pyarrow>=15.0.0
 numpy>=1.26.0
 
-# Base de datos y conectividad
+# Database connectivity
 psycopg2-binary>=2.9.9
 sqlalchemy>=2.0.0
 
-# Variables de entorno y utilidades
+# Environment variables and utilities
 python-dotenv>=1.0.1
 pydantic>=2.0.0
 
-# Análisis exploratorio y profiling (notebooks)
+# Profiling notebook, KPI charts and deck build (Pillow comes with matplotlib)
 jupyterlab>=4.0.0
 notebook>=7.0.0
 matplotlib>=3.8.0

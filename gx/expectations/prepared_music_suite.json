@@ -260,6 +260,22 @@
       "type": "expect_column_values_to_be_in_set",
       "kwargs": {
         "column": "is_grammy_winner",
+        "mostly": 0.001,
+        "value_set": [
+          true
+        ]
+      },
+      "meta": {
+        "rule_id": "DQ-PREP-INT-07",
+        "severity": "Critical"
+      },
+      "notes": "DQ-PREP-INT-07 [Critical]: Analytical readiness: matched rows must be at least 0.1% of the catalog (~114 rows). Below that KPI-02 has no comparable genre (n >= 5) and the drop signals a broken match key.",
+      "severity": "critical"
+    },
+    {
+      "type": "expect_column_values_to_be_in_set",
+      "kwargs": {
+        "column": "is_grammy_winner",
         "mostly": 0.95,
         "value_set": [
           false

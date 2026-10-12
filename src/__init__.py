@@ -1,3 +1,3 @@
 """
-Paquete principal de módulos ETL para Workshop-2
+ETL modules for Workshop-2 (extract, validation, transform, load).
 """

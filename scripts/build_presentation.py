@@ -46,6 +46,10 @@ IMAGES = {
     "d2_crop": ("test_d_selective_retry/d2_attempt1_failed_log.png", (0.245, 0.25, 0.60, 0.56)),
     "d3": ("test_d_selective_retry/d3_attempt2_success_log.png", None),
     "d3_crop": ("test_d_selective_retry/d3_attempt2_success_log.png", (0.245, 0.25, 0.60, 0.585)),
+    "e1": ("test_e_prepared_gate/e1_graph_prepared_gate.png", None),
+    "e1_crop": ("test_e_prepared_gate/e1_graph_prepared_gate.png", (0.05, 0.38, 0.70, 0.66)),
+    "e2": ("test_e_prepared_gate/e2_validate_prepared_log.png", None),
+    "e2_crop": ("test_e_prepared_gate/e2_validate_prepared_log.png", (0.245, 0.668, 0.70, 0.79)),
     "overview": ("dag_overview_all_runs.png", None),
     "overview_crop": ("dag_overview_all_runs.png", (0.045, 0.12, 0.228, 0.40)),
     "mb": ("kpi/metabase_dashboard.png", (0.0, 0.0, 1.0, 0.83)),
@@ -114,6 +118,11 @@ def build():
         return uris[key]
 
     html = re.sub(r"%%(IMG|FULL):([a-z0-9_]+)%%", sub, html)
+    # Test E figures come from the run's integration report
+    with open(os.path.join(EV, "runs", "test_e_prepared_gate", "integration_report.json"), encoding="utf-8") as f:
+        integ = json.load(f)["integration"]
+    html = html.replace("%%E_MATCHED%%", f"{integ['matched_spotify_rows']:,}")
+    html = html.replace("%%E_RATE%%", f"{integ['match_rate_rows_pct']:.2f}%")
     with open(OUTPUT, "w", encoding="utf-8") as f:
         f.write(html)
     print(f"Generated {os.path.relpath(OUTPUT, ROOT)} ({len(html) / 1e6:.1f} MB, {len(uris)} images)")

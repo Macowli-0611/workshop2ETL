@@ -1,8 +1,8 @@
 dag_id                  | logical_date | task_id                 | state   | start_date                       | end_date                        
-reliable_music_pipeline |              | extract_spotify         | success | 2026-10-12T00:26:06.564632+00:00 | 2026-10-12T00:26:09.339934+00:00
-reliable_music_pipeline |              | extract_grammys         | success | 2026-10-12T00:26:06.572503+00:00 | 2026-10-12T00:26:08.693720+00:00
-reliable_music_pipeline |              | validate_grammys_raw    | success | 2026-10-12T00:26:09.624904+00:00 | 2026-10-12T00:26:25.211439+00:00
-reliable_music_pipeline |              | validate_spotify_raw    | success | 2026-10-12T00:26:09.699825+00:00 | 2026-10-12T00:26:26.218965+00:00
-reliable_music_pipeline |              | transform_and_integrate | success | 2026-10-12T00:26:27.209881+00:00 | 2026-10-12T00:26:37.124041+00:00
-reliable_music_pipeline |              | validate_prepared       | success | 2026-10-12T00:26:37.620962+00:00 | 2026-10-12T00:26:49.103880+00:00
-reliable_music_pipeline |              | load_dw                 | success | 2026-10-12T00:26:50.009943+00:00 | 2026-10-12T00:27:23.958492+00:00
+reliable_music_pipeline |              | extract_grammys         | success | 2026-10-12T01:32:00.299161+00:00 | 2026-10-12T01:32:01.030393+00:00
+reliable_music_pipeline |              | extract_spotify         | success | 2026-10-12T01:32:00.299582+00:00 | 2026-10-12T01:32:01.770560+00:00
+reliable_music_pipeline |              | validate_grammys_raw    | success | 2026-10-12T01:32:01.399270+00:00 | 2026-10-12T01:32:06.974000+00:00
+reliable_music_pipeline |              | transform_and_integrate | success | 2026-10-12T01:32:10.290612+00:00 | 2026-10-12T01:32:12.612044+00:00
+reliable_music_pipeline |              | validate_spotify_raw    | success | 2026-10-12T01:32:02.499298+00:00 | 2026-10-12T01:32:09.586444+00:00
+reliable_music_pipeline |              | validate_prepared       | success | 2026-10-12T01:32:13.452628+00:00 | 2026-10-12T01:32:18.415061+00:00
+reliable_music_pipeline |              | load_dw                 | success | 2026-10-12T01:32:19.314881+00:00 | 2026-10-12T01:32:35.496117+00:00

@@ -3,7 +3,7 @@
   "suite": "spotify_raw_suite",
   "validation_definition": "spotify_raw_validation_definition",
   "checkpoint": "spotify_raw_checkpoint",
-  "evaluated_at": "2026-10-12T00:25:12.981243+00:00",
+  "evaluated_at": "2026-10-12T01:31:16.458440+00:00",
   "batch_context": {
     "run_id": "test_a_success",
     "source": "spotify_dataset.csv"

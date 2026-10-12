@@ -1,6 +1,6 @@
 # Test B — Controlled Critical Quality Failure (Section 7.2)
 
-**Run:** `reliable_music_pipeline` / `test_b_controlled_failure` · 2026-10-12 00:28:08 → 00:28:30 UTC · final state **failed** (as designed).
+**Run:** `reliable_music_pipeline` / `test_b_controlled_failure` · 2026-10-12 01:32:53 → 01:33:07 UTC · final state **failed** (as designed).
 
 ## Induced condition
 

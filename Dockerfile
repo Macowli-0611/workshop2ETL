@@ -1,8 +1,8 @@
-# Dockerfile para entorno de Apache Airflow 3.1.8 con dependencias del proyecto
+# Apache Airflow 3.1.8 image with the project dependencies
 FROM apache/airflow:3.1.8-python3.11
 
 USER root
-# Instalar utilidades esenciales si se requieren para compilación ligera
+# Build tools needed to compile some Python dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         build-essential \
@@ -12,6 +12,6 @@ RUN apt-get update && \
 
 USER airflow
 
-# Copiar e instalar dependencias del taller (Great Expectations, Pandas, etc.)
+# Install the workshop dependencies (Great Expectations, pandas, etc.)
 COPY requirements.txt /requirements.txt
 RUN pip install --no-cache-dir -r /requirements.txt
