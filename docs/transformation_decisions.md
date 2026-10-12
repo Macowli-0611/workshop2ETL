@@ -1,6 +1,6 @@
 # Transformation & Integration Decision Record
 
-Section 6.8 of the brief. Every rule is implemented in `src/transform.py` (marked with its `TR-xx` ID) and is justified independently of the validation result. Validation detects; these rules transform. Counts come from [`test_a_success/integration_report.json`](evidence/runs/test_a_success/integration_report.json).
+Section 6.8 of the brief. Every rule is implemented in `src/transform.py` (marked with its `TR-xx` ID) and is justified independently of the validation result. Validation detects; these rules transform. Counts come from [`runs/test_a_success/integration_report.json`](evidence/runs/test_a_success/integration_report.json).
 
 | ID | Rule and rationale | Affected fields / records | Before → after | Exception handling | Analytical impact |
 | :--- | :--- | :--- | :--- | :--- | :--- |

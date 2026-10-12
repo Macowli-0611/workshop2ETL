@@ -9,7 +9,7 @@ Every output queries the **dimensional Data Warehouse** `dw_music_analytics` (ne
 - **Least privilege:** Looker Studio logs in as `bi_reader`, a role with `SELECT` on the analytical views only. Querying the tables is denied.
 - **Data sources (one per view):** `vw_kpi_scorecards`, `vw_kpi1_audio_profile_long`, `vw_kpi2_genre_uplift_comparable`, `vw_kpi3_decade_trends`. These views have the exact shape each chart needs, because Looker Studio cannot compute across rows (e.g. the uplift).
 - **Setup guide:** [bi_looker_studio_guide.md](bi_looker_studio_guide.md) · **Screenshot:** [`docs/evidence/kpi/looker_studio_dashboard.png`](evidence/kpi/looker_studio_dashboard.png)
-- **Alternatives on the same views:** a local Metabase dashboard built from code (`scripts/setup_metabase.py`, [`metabase_dashboard.png`](evidence/kpi/metabase_dashboard.png)) for offline demos, and Tableau Desktop ([bi_tableau_guide.md](bi_tableau_guide.md)).
+- **Alternative on the same views:** a local Metabase dashboard built from code (`scripts/setup_metabase.py`, [`metabase_dashboard.png`](evidence/kpi/metabase_dashboard.png)) for offline demos.
 
 ## 2. Requirement → DW element → KPI
 

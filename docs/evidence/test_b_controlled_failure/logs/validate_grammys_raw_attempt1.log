@@ -1,0 +1,15 @@
+2026-10-12T01:32:56.786 [WARNING] /home/airflow/.local/lib/python3.11/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.3) or chardet (6.0.0.post1)/charset_normalizer (3.4.5) doesn't match a supported version!
+  warnings.warn(
+
+2026-10-12T01:32:59.799 [WARNING] /home/airflow/.local/lib/python3.11/site-packages/snowflake/connector/vendored/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.5.0) or chardet (6.0.0.post1)/charset_normalizer (3.4.5) doesn't match a supported version!
+  warnings.warn(
+
+2026-10-12T01:33:00.372 [INFO] Multiple declarations of metric table.column_types for engine PandasExecutionEngine.
+2026-10-12T01:33:00.372 [INFO] Multiple declarations of metric table.column_types for engine SparkDFExecutionEngine.
+2026-10-12T01:33:00.515 [INFO] BATCH CONTEXT | dag=reliable_music_pipeline run_id=test_b_controlled_failure task=validate_grammys_raw try=1 logical_date=None
+2026-10-12T01:33:00.515 [INFO] Executing Raw Validation Gate for Grammys: /opt/airflow/data/staging/test_b_controlled_failure/grammys_raw.parquet
+2026-10-12T01:33:00.636 [INFO] [grammys_raw] Validation evidence saved to: /opt/airflow/docs/evidence/runs/test_b_controlled_failure/grammys_raw_validation.json
+2026-10-12T01:33:00.636 [INFO] [grammys_raw] 3/4 expectations passed on 4,811 records -> gate decision STOP
+2026-10-12T01:33:00.636 [ERROR] Critical quality gate failure in grammys_raw: DQ-RAW-GRM-01 (year). Downstream processing is blocked. Evidence: /opt/airflow/docs/evidence/runs/test_b_controlled_failure/grammys_raw_validation.json
+2026-10-12T01:33:00.636 [ERROR] Task failed with exception
+    CriticalDataQualityError: Critical quality gate failure in grammys_raw: DQ-RAW-GRM-01 (year). Downstream processing is blocked. Evidence: /opt/airflow/docs/evidence/runs/test_b_controlled_failure/grammys_raw_validation.json

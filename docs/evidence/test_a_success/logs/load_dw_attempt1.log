@@ -1,0 +1,16 @@
+2026-10-12T01:31:25.315 [INFO] BATCH CONTEXT | dag=reliable_music_pipeline run_id=test_a_success task=load_dw try=1 logical_date=None
+2026-10-12T01:31:25.315 [INFO] Initiating Data Warehouse loading (postgres:5432/dw_music_analytics) for batch_id=test_a_success
+2026-10-12T01:31:25.455 [INFO] Total prepared records to process: 113,549
+2026-10-12T01:31:25.512 [INFO] DW schema verified/applied from /opt/airflow/sql/dw_schema.sql
+2026-10-12T01:31:25.516 [INFO] DW state BEFORE load: {'fact_rows': 0, 'fact_winner_rows': 0, 'dim_track': 0, 'dim_artist': 0, 'dim_genre': 0, 'dim_time': 1, 'dim_grammy_category': 1, 'sum_popularity': 0, 'avg_danceability': 0.0, 'sum_award_count': 0}
+2026-10-12T01:31:45.800 [INFO] ============================================================
+2026-10-12T01:31:45.800 [INFO] DATA WAREHOUSE LOAD RECONCILIATION SUMMARY
+2026-10-12T01:31:45.800 [INFO]  batch_id: test_a_success
+2026-10-12T01:31:45.800 [INFO]  prepared rows: 113,549 | inserted: 113,549 | updated: 0 | purged stale: 0
+2026-10-12T01:31:45.800 [INFO]  fact rows before -> after: 0 -> 113,549
+2026-10-12T01:31:45.800 [INFO]  sum(popularity) before -> after: 0 -> 3,783,956
+2026-10-12T01:31:45.801 [INFO]  winner rows: 475 | tracks: 89,740 | artists: 17,645
+2026-10-12T01:31:45.801 [INFO] ============================================================
+2026-10-12T01:31:45.803 [INFO] Load evidence saved to: /opt/airflow/docs/evidence/runs/test_a_success/load_report.json
+2026-10-12T01:31:45.847 [INFO] Done. Returned value was: {'batch_id': 'test_a_success', 'prepared_rows': 113549, 'fact_rows_inserted': 113549, 'fact_rows_updated': 0, 'fact_rows_purged_stale': 0, 'before': {'fact_rows': 0, 'fact_winner_rows': 0, 'dim_track': 0, 'dim_artist': 0, 'dim_genre': 0, 'dim_time': 1, 'dim_grammy_category': 1, 'sum_popularity': 0, 'avg_danceability': 0.0, 'sum_award_count': 0}, 'after': {'fact_rows': 113549, 'fact_winner_rows': 475, 'dim_track': 89740, 'dim_artist': 17645, 'dim_genre': 114, 'dim_time': 53, 'dim_grammy_category': 68, 'sum_popularity': 3783956, 'avg_danceability': 0.567031, 'sum_award_count': 538}, 'fact_rows_equal_prepared_rows': True}
+2026-10-12T01:31:45.849 [INFO] Pushing xcom

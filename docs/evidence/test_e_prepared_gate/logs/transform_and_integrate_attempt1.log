@@ -1,0 +1,10 @@
+2026-10-12T01:35:05.231 [INFO] BATCH CONTEXT | dag=reliable_music_pipeline run_id=test_e_prepared_gate task=transform_and_integrate try=1 logical_date=None
+2026-10-12T01:35:05.231 [INFO] Executing transformation and integration phase...
+2026-10-12T01:35:05.388 [INFO] Incoming records: Spotify=114,000, Grammys=4,810
+2026-10-12T01:35:05.606 [INFO] Spotify post-cleaning: 113,549 rows (removed 1 null-metadata, 0 invalid-duration, 450 duplicate rows).
+2026-10-12T01:35:06.766 [INFO] Integration finalized: 113,549 prepared load-ready rows.
+2026-10-12T01:35:06.767 [INFO] Matched rows: 71 (0.06%) | distinct matched tracks: 33 | matched Grammy keys: 13/4,439 | unmatched Grammy keys: 4,426 (99.7%)
+2026-10-12T01:35:07.022 [INFO] Prepared dimensional dataset saved to: /opt/airflow/data/staging/test_e_prepared_gate/prepared_music_data.parquet
+2026-10-12T01:35:07.038 [INFO] Integration contract evidence saved to: /opt/airflow/docs/evidence/runs/test_e_prepared_gate/integration_report.json
+2026-10-12T01:35:07.066 [INFO] Done. Returned value was: /opt/airflow/data/staging/test_e_prepared_gate/prepared_music_data.parquet
+2026-10-12T01:35:07.067 [INFO] Pushing xcom

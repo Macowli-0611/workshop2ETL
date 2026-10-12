@@ -1,0 +1,6 @@
+2026-10-12T01:33:29.078 [INFO] BATCH CONTEXT | dag=reliable_music_pipeline run_id=test_d_transient_retry task=extract_grammys try=1 logical_date=None
+2026-10-12T01:33:29.078 [INFO] Initiating Grammy Awards extraction from operational relational database.
+2026-10-12T01:33:29.088 [ERROR] Task failed with exception
+    OperationalError: (psycopg2.OperationalError) connection to server at "postgres" (172.20.0.2), port 5432 failed: FATAL:  database "source_music_db" is not currently accepting connections
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)

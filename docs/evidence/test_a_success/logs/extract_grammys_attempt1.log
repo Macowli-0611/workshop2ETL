@@ -1,0 +1,6 @@
+2026-10-12T01:31:09.742 [INFO] BATCH CONTEXT | dag=reliable_music_pipeline run_id=test_a_success task=extract_grammys try=1 logical_date=None
+2026-10-12T01:31:09.742 [INFO] Initiating Grammy Awards extraction from operational relational database.
+2026-10-12T01:31:09.849 [INFO] Grammy Awards successfully extracted from PostgreSQL: 4,810 records.
+2026-10-12T01:31:09.891 [INFO] Raw Grammy dataset persisted to staging: /opt/airflow/data/staging/test_a_success/grammys_raw.parquet
+2026-10-12T01:31:09.893 [INFO] Done. Returned value was: /opt/airflow/data/staging/test_a_success/grammys_raw.parquet
+2026-10-12T01:31:09.893 [INFO] Pushing xcom

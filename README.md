@@ -144,7 +144,7 @@ Star schema in [`sql/dw_schema.sql`](sql/dw_schema.sql) (idempotent; applied by 
 | RQ-02 | `vw_kpi2_genre_uplift_comparable` | Bubble scatter (winners vs catalog per genre, size = n) + heat-map table with n | Largest uplift: soul +45.6 (n=20), jazz +42.4 (n=9), country +23.6 (n=26); negative in pop (−21.3), electro (−16.2) |
 | RQ-03 | `vw_kpi3_decade_trends`, `vw_kpi_scorecards` | Combo chart (tracks per decade + % lines) + scorecard | Explicit share 0% (≤1980s) → 7.3% → 14.1% → **20.2% (2010s)**; collaborations **35.7%** in the 2010s |
 
-A local Metabase dashboard on the same views is also included (`scripts/setup_metabase.py`, [`metabase_dashboard.png`](docs/evidence/kpi/metabase_dashboard.png)) for offline demos, and [`docs/bi_tableau_guide.md`](docs/bi_tableau_guide.md) shows the same views in Tableau. Static copies with the numbers in CSV: [`docs/evidence/kpi/`](docs/evidence/kpi/).
+A local Metabase dashboard on the same views is also included (`scripts/setup_metabase.py`, [`metabase_dashboard.png`](docs/evidence/kpi/metabase_dashboard.png)) for offline demos. Static copies with the numbers in CSV: [`docs/evidence/kpi/`](docs/evidence/kpi/).
 
 ## 16. Setup and execution
 

@@ -1,0 +1,6 @@
+2026-10-12T01:31:09.742 [INFO] BATCH CONTEXT | dag=reliable_music_pipeline run_id=test_a_success task=extract_spotify try=1 logical_date=None
+2026-10-12T01:31:09.742 [INFO] Initiating Spotify extraction from: /opt/airflow/data/spotify_dataset.csv
+2026-10-12T01:31:10.229 [INFO] Spotify successfully extracted: 114,000 records, 21 columns.
+2026-10-12T01:31:10.473 [INFO] Raw Spotify dataset persisted to staging: /opt/airflow/data/staging/test_a_success/spotify_raw.parquet
+2026-10-12T01:31:10.483 [INFO] Done. Returned value was: /opt/airflow/data/staging/test_a_success/spotify_raw.parquet
+2026-10-12T01:31:10.483 [INFO] Pushing xcom

@@ -1,0 +1,16 @@
+2026-10-12T01:32:19.738 [INFO] BATCH CONTEXT | dag=reliable_music_pipeline run_id=test_c_safe_rerun task=load_dw try=1 logical_date=None
+2026-10-12T01:32:19.738 [INFO] Initiating Data Warehouse loading (postgres:5432/dw_music_analytics) for batch_id=test_c_safe_rerun
+2026-10-12T01:32:19.986 [INFO] Total prepared records to process: 113,549
+2026-10-12T01:32:20.022 [INFO] DW schema verified/applied from /opt/airflow/sql/dw_schema.sql
+2026-10-12T01:32:20.101 [INFO] DW state BEFORE load: {'fact_rows': 113549, 'fact_winner_rows': 475, 'dim_track': 89740, 'dim_artist': 17645, 'dim_genre': 114, 'dim_time': 53, 'dim_grammy_category': 68, 'sum_popularity': 3783956, 'avg_danceability': 0.567031, 'sum_award_count': 538}
+2026-10-12T01:32:35.385 [INFO] ============================================================
+2026-10-12T01:32:35.386 [INFO] DATA WAREHOUSE LOAD RECONCILIATION SUMMARY
+2026-10-12T01:32:35.386 [INFO]  batch_id: test_c_safe_rerun
+2026-10-12T01:32:35.386 [INFO]  prepared rows: 113,549 | inserted: 0 | updated: 113,549 | purged stale: 0
+2026-10-12T01:32:35.386 [INFO]  fact rows before -> after: 113,549 -> 113,549
+2026-10-12T01:32:35.386 [INFO]  sum(popularity) before -> after: 3,783,956 -> 3,783,956
+2026-10-12T01:32:35.386 [INFO]  winner rows: 475 | tracks: 89,740 | artists: 17,645
+2026-10-12T01:32:35.386 [INFO] ============================================================
+2026-10-12T01:32:35.388 [INFO] Load evidence saved to: /opt/airflow/docs/evidence/runs/test_c_safe_rerun/load_report.json
+2026-10-12T01:32:35.421 [INFO] Done. Returned value was: {'batch_id': 'test_c_safe_rerun', 'prepared_rows': 113549, 'fact_rows_inserted': 0, 'fact_rows_updated': 113549, 'fact_rows_purged_stale': 0, 'before': {'fact_rows': 113549, 'fact_winner_rows': 475, 'dim_track': 89740, 'dim_artist': 17645, 'dim_genre': 114, 'dim_time': 53, 'dim_grammy_category': 68, 'sum_popularity': 3783956, 'avg_danceability': 0.567031, 'sum_award_count': 538}, 'after': {'fact_rows': 113549, 'fact_winner_rows': 475, 'dim_track': 89740, 'dim_artist': 17645, 'dim_genre': 114, 'dim_time': 53, 'dim_grammy_category': 68, 'sum_popularity': 3783956, 'avg_danceability': 0.567031, 'sum_award_count': 538}, 'fact_rows_equal_prepared_rows': True}
+2026-10-12T01:32:35.424 [INFO] Pushing xcom

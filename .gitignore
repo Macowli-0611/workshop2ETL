@@ -36,7 +36,7 @@ wheels/
 */.ipynb_checkpoints/*
 
 # Airflow
-logs/
+/logs/
 airflow.cfg
 airflow.db
 webserver_config.py
@@ -57,8 +57,6 @@ data/processed/
 .DS_Store
 Thumbs.db
 
-# Early planning notes (superseded by docs/); kept locally only
-docs/planning/
 
 # Personal defense material (speaker scripts, incl. Spanish); not part of the submission
 defense/
