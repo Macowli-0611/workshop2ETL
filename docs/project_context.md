@@ -21,7 +21,7 @@ Two datasets describe music from two different worlds. **Spotify** (114,000 trac
 | 6.5 | ≥ 6 rules with dimension, threshold, severity, requirement | 18 rules (13 Critical, 3 Warning, 2 Informational) | `docs/quality_rules.md` |
 | 6.6 | GX suites, validation definitions, checkpoints, rule mapping, results | 3 suites / 32 expectations, each tagged with its rule ID; per-run JSON results | `src/validation.py`, `gx/`, `docs/evidence/runs/` |
 | 6.7 | Two observable source branches with raw gates; a controlled Critical failure | `extract_* → validate_*_raw` per source; Test B | `dags/reliable_music_pipeline.py`, Test B |
-| 6.8 | Justified transformations and an integration contract | 12 TR rules; key, cardinality, unmatched and duplicate handling, all measured | `docs/transformation_and_integration.md`, `docs/transformation_and_integration.md` |
+| 6.8 | Justified transformations and an integration contract | 12 TR rules; key, cardinality, unmatched and duplicate handling, all measured | `docs/transformation_and_integration.md` |
 | 6.9 | Separate prepared gate that gates the load | `validate_prepared` (19 expectations); Test E proves it blocks `load_dw` | Test E |
 | 6.11 | Meaningful tasks, dependencies, small XCom, selective retries, logging | 7 tasks; paths in XCom; retries only for transient failures; batch context in every log | `docs/architecture.md` |
 | 7.1–7.3 | Success, controlled failure, safe rerun | Tests A, B, C (+ D for retries, E for the prepared gate) | `docs/evidence/test_*` |
