@@ -60,3 +60,7 @@ Thumbs.db
 
 # Personal defense material (speaker scripts, incl. Spanish); not part of the submission
 defense/
+
+# Ad-hoc runs (e.g. the live demo); only the documented test runs are committed
+docs/evidence/runs/*
+!docs/evidence/runs/test_*/
